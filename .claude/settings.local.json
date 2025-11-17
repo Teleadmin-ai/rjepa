@@ -1,25 +1,8 @@
 {
   "permissions": {
     "allow": [
-      "Bash(git clone https://github.com/Teleadmin-ai/jepa .)",
-      "Bash(git init)",
-      "Bash(git remote add origin https://github.com/Teleadmin-ai/jepa)",
-      "Bash(git fetch origin)",
-      "Bash(git checkout -b main)",
-      "Bash(git reset --soft origin/main)",
-      "Bash(git reset --hard origin/main)",
-      "Bash(dir)",
-      "Bash(tree /F /A)",
-      "Bash(dir /S /B)",
-      "Bash(findstr /E \".py\")",
-      "Bash(python scripts/validate_phase1.py:*)",
-      "Bash(pip install:*)",
-      "Bash(python scripts/validate_phase2.py:*)",
-      "Bash(python scripts/validate_phase3.py:*)",
-      "Bash(python scripts/validate_phase4.py:*)",
-      "Bash(python scripts/validate_phase5.py:*)",
-      "Bash(python scripts/validate_phase6.py:*)",
-      "Bash(git add:*)"
+      "Bash(python scripts/validate_phase7.py:*)",
+      "Bash(python -m pytest:*)"
     ],
     "deny": [],
     "ask": []

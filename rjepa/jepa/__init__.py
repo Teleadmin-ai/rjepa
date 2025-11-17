@@ -15,6 +15,9 @@ from .maskers import (
 )
 from .losses import JEPALoss
 from .dataset import LatentDataset
+from .trainer import RJEPATrainer
+from .client import RJEPAClient
+from .service import create_app, RJEPAService
 
 __all__ = [
     "ReasoningJEPA",
@@ -28,4 +31,8 @@ __all__ = [
     "create_masker",
     "JEPALoss",
     "LatentDataset",
+    "RJEPATrainer",
+    "RJEPAClient",
+    "create_app",
+    "RJEPAService",
 ]

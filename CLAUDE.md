@@ -136,21 +136,48 @@
 │ • ~1100 lignes de code                                                      │
 │ • VALIDATION: ✅ Tous tests passent (trainer + pipeline + EMA OK)           │
 │                                                                              │
-│ PHASES RESTANTES (7-11) :                                       ⏳ À VENIR  │
-│ • Phase 7: R-JEPA Service (inference API)                                   │
+│ PHASE 7 : R-JEPA SERVICE (inference API)                       ✅ COMPLETE │
+│ • rjepa/jepa/service.py (FastAPI service, 400+ lignes)                     │
+│   - RJEPAService: Load checkpoint + inference                               │
+│   - Pydantic schemas (request/response validation)                          │
+│   - create_app(): FastAPI factory                                           │
+│   - Endpoint GET /health: healthcheck + model status                        │
+│   - Endpoint POST /score: Calcule JEPA-loss (re-ranking)                   │
+│   - Endpoint POST /predict_masked: Prédit steps masqués (nudge/plan)       │
+│   - CLI: python -m rjepa.jepa.service --checkpoint ... --port 8100          │
+│ • rjepa/jepa/client.py (Python HTTP client, 100+ lignes)                   │
+│   - RJEPAClient: Client HTTP pour service R-JEPA                            │
+│   - Methods: health(), score(), predict_masked()                            │
+│   - Support tensors PyTorch (conversion auto)                               │
+│ • docker/rjepa-service.Dockerfile                                           │
+│   - Base: nvidia/cuda:12.1.0-runtime                                        │
+│   - Expose port 8100                                                        │
+│   - Health check intégré                                                    │
+│   - ENV vars: RJEPA_CHECKPOINT, RJEPA_DEVICE, RJEPA_PORT                   │
+│ • tests/test_service.py (11 tests, 200+ lignes)                            │
+│   - test_health_endpoint                                                    │
+│   - test_score_endpoint, test_score_with_domain                             │
+│   - test_predict_masked_endpoint, test_predict_masked_with_domain          │
+│   - test_rjepa_client_score, test_rjepa_client_predict_masked              │
+│   - Error handling tests                                                    │
+│ • scripts/validate_phase7.py                                                │
+│ • ~700 lignes de code                                                       │
+│ • VALIDATION: ✅ Tous tests passent (service + client + endpoints OK)       │
+│                                                                              │
+│ PHASES RESTANTES (8-11) :                                       ⏳ À VENIR  │
 │ • Phase 8: Inference Modes (rerank, nudge, plan)                            │
 │ • Phase 9: Frontend (Next.js chat + monitoring)                             │
 │ • Phase 10: Docker Compose & Intégration                                    │
 │ • Phase 11: Évaluation & Benchmarks                                         │
 └─────────────────────────────────────────────────────────────────────────────┘
 
-PROGRESSION GLOBALE: [███████████████░░░░░] 64% (7/11 phases complètes)
+PROGRESSION GLOBALE: [████████████████░░░░] 73% (8/11 phases complètes)
 
-LIGNES DE CODE ÉCRITES: ~8800+
-FICHIERS CRÉÉS: ~89+
-TESTS UNITAIRES: 40 (tous passent ✅)
+LIGNES DE CODE ÉCRITES: ~9500+
+FICHIERS CRÉÉS: ~93+
+TESTS UNITAIRES: 51 (tous passent ✅)
 
-PROCHAIN MILESTONE: Phase 7 (R-JEPA Service) - FastAPI inference API, endpoints score/predict/health.
+PROCHAIN MILESTONE: Phase 8 (Inference Modes) - rerank, nudge, plan - intégration R-JEPA avec student LLM.
 
 ═══════════════════════════════════════════════════════════════════════════════
 🌍 PHILOSOPHIE WORLD MODEL — LA VISION PROFONDE
