@@ -1,0 +1,263 @@
+version: '3.8'
+
+# =============================================================================
+# R-JEPA COMPLETE STACK - Docker Compose
+# =============================================================================
+
+services:
+  # ===========================================================================
+  # 1. STUDENT LLM (vLLM server avec Qwen3-8B + extraction latents)
+  # ===========================================================================
+  student-llm:
+    build:
+      context: .
+      dockerfile: docker/student-llm.Dockerfile
+    image: rjepa/student-llm:latest
+    container_name: rjepa-student-llm
+    restart: unless-stopped
+
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+
+    environment:
+      - CUDA_VISIBLE_DEVICES=0
+      - MODEL_NAME=${STUDENT_MODEL_NAME:-Qwen/Qwen3-8B-Instruct}
+      - QUANTIZATION=${STUDENT_QUANTIZATION:-awq-4bit}
+      - MAX_MODEL_LEN=4096
+      - GPU_MEMORY_UTILIZATION=0.85
+      - LAYER_TO_EXTRACT=${STUDENT_LAYER_TO_EXTRACT:--2}
+
+    ports:
+      - "8000:8000"                   # vLLM OpenAI-compatible API
+      - "8001:8001"                   # Latent extraction API (custom)
+
+    volumes:
+      - ./data:/app/data
+      - ./logs/student-llm:/app/logs
+      - huggingface_cache:/root/.cache/huggingface
+
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+    networks:
+      - rjepa-network
+
+  # ===========================================================================
+  # 2. R-JEPA SERVICE (inference API)
+  # ===========================================================================
+  rjepa-service:
+    build:
+      context: .
+      dockerfile: docker/rjepa-service.Dockerfile
+    image: rjepa/rjepa-service:latest
+    container_name: rjepa-service
+    restart: unless-stopped
+
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+
+    environment:
+      - CUDA_VISIBLE_DEVICES=0
+      - RJEPA_CHECKPOINT=${RJEPA_CHECKPOINT:-/app/data/checkpoints/rjepa-qwen3-8b/latest.pth}
+      - RJEPA_CONFIG=/app/configs/rjepa/base.yaml
+      - RJEPA_DEVICE=cuda
+
+    ports:
+      - "8100:8100"                   # R-JEPA API
+
+    volumes:
+      - ./data:/app/data
+      - ./configs:/app/configs
+      - ./logs/rjepa:/app/logs
+
+    depends_on:
+      student-llm:
+        condition: service_healthy
+
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8100/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+    networks:
+      - rjepa-network
+
+  # ===========================================================================
+  # 3. TEACHER ORCHESTRATOR
+  # ===========================================================================
+  teacher-orch:
+    build:
+      context: .
+      dockerfile: docker/teacher-orch.Dockerfile
+    image: rjepa/teacher-orch:latest
+    container_name: rjepa-teacher-orch
+    restart: unless-stopped
+
+    environment:
+      - TEACHER_CLAUDE_BASE_URL=${TEACHER_CLAUDE_BASE_URL}
+      - TEACHER_CLAUDE_API_KEY=${TEACHER_CLAUDE_API_KEY}
+      - TEACHER_CLAUDE_MODEL=${TEACHER_CLAUDE_MODEL:-claude-3-5-sonnet-20241022}
+      - TEACHER_GPT_BASE_URL=${TEACHER_GPT_BASE_URL}
+      - TEACHER_GPT_API_KEY=${TEACHER_GPT_API_KEY}
+      - TEACHER_GPT_MODEL=${TEACHER_GPT_MODEL:-gpt-4-turbo-2024-04-09}
+      - TEACHER_MAX_BUDGET_PER_JOB=${TEACHER_MAX_BUDGET_PER_JOB:-50.0}
+
+    ports:
+      - "8200:8200"                   # Teacher API
+
+    volumes:
+      - ./data:/app/data
+      - ./configs/teacher:/app/configs
+      - ./logs/teacher:/app/logs
+
+    networks:
+      - rjepa-network
+
+  # ===========================================================================
+  # 4. PREFECT SERVER (orchestration UI)
+  # ===========================================================================
+  prefect-server:
+    image: prefecthq/prefect:2-python3.11
+    container_name: rjepa-prefect-server
+    restart: unless-stopped
+
+    ports:
+      - "4200:4200"                   # Prefect UI
+
+    environment:
+      - PREFECT_SERVER_API_HOST=0.0.0.0
+      - PREFECT_API_DATABASE_CONNECTION_URL=sqlite:///prefect.db
+
+    volumes:
+      - prefect_data:/root/.prefect
+
+    command: prefect server start --host 0.0.0.0
+
+    networks:
+      - rjepa-network
+
+  # ===========================================================================
+  # 5. DATA PIPELINE (Prefect worker)
+  # ===========================================================================
+  data-pipeline:
+    build:
+      context: .
+      dockerfile: docker/data-pipeline.Dockerfile
+    image: rjepa/data-pipeline:latest
+    container_name: rjepa-data-pipeline
+    restart: unless-stopped
+
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+
+    environment:
+      - PREFECT_API_URL=http://prefect-server:4200/api
+      - CUDA_VISIBLE_DEVICES=0
+
+    volumes:
+      - ./data:/app/data
+      - ./configs:/app/configs
+      - ./logs/pipeline:/app/logs
+
+    depends_on:
+      - prefect-server
+      - student-llm
+      - teacher-orch
+
+    command: prefect agent start -q default
+
+    networks:
+      - rjepa-network
+
+  # ===========================================================================
+  # 6. UI BACKEND (Gateway FastAPI + WebSocket)
+  # ===========================================================================
+  ui-backend:
+    build:
+      context: .
+      dockerfile: docker/ui-backend.Dockerfile
+    image: rjepa/ui-backend:latest
+    container_name: rjepa-ui-backend
+    restart: unless-stopped
+
+    environment:
+      - STUDENT_LLM_URL=http://student-llm:8000
+      - RJEPA_SERVICE_URL=http://rjepa-service:8100
+      - PREFECT_API_URL=http://prefect-server:4200/api
+
+    ports:
+      - "8300:8300"                   # UI backend API
+
+    volumes:
+      - ./logs/interactions:/app/logs/interactions
+
+    depends_on:
+      student-llm:
+        condition: service_healthy
+      rjepa-service:
+        condition: service_healthy
+      prefect-server:
+        condition: service_started
+
+    networks:
+      - rjepa-network
+
+  # ===========================================================================
+  # 7. UI FRONTEND (Next.js)
+  # ===========================================================================
+  ui-frontend:
+    build:
+      context: ./ui/web
+      dockerfile: ../../docker/ui-frontend.Dockerfile
+    image: rjepa/ui-frontend:latest
+    container_name: rjepa-ui-frontend
+    restart: unless-stopped
+
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:8300
+
+    ports:
+      - "3000:3000"                   # Next.js app
+
+    depends_on:
+      - ui-backend
+
+    networks:
+      - rjepa-network
+
+# =============================================================================
+# VOLUMES PARTAGÉS
+# =============================================================================
+volumes:
+  huggingface_cache:                # Cache modèles HF (persistant)
+    driver: local
+  prefect_data:                     # DB Prefect
+    driver: local
+
+# =============================================================================
+# RÉSEAU
+# =============================================================================
+networks:
+  rjepa-network:
+    driver: bridge

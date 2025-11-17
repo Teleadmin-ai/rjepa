@@ -1,0 +1,48 @@
+version: '3.8'
+
+# ═════════════════════════════════════════════════════════════════════════════
+# DEVELOPMENT OVERRIDES
+# Usage: docker-compose -f docker-compose.yml -f docker-compose.dev.yml up
+# ═════════════════════════════════════════════════════════════════════════════
+
+services:
+  student-llm:
+    environment:
+      - LOG_LEVEL=DEBUG
+    volumes:
+      - ./rjepa:/app/rjepa:ro      # Mount code en lecture seule pour hot reload
+    command: python -m rjepa.llm.server --reload
+
+  rjepa-service:
+    environment:
+      - LOG_LEVEL=DEBUG
+    volumes:
+      - ./rjepa:/app/rjepa:ro
+    command: python -m uvicorn rjepa.jepa.service:app --host 0.0.0.0 --port 8100 --reload
+
+  teacher-orch:
+    environment:
+      - LOG_LEVEL=DEBUG
+    volumes:
+      - ./rjepa:/app/rjepa:ro
+
+  data-pipeline:
+    environment:
+      - LOG_LEVEL=DEBUG
+    volumes:
+      - ./rjepa:/app/rjepa:ro
+
+  ui-backend:
+    environment:
+      - LOG_LEVEL=DEBUG
+    volumes:
+      - ./rjepa:/app/rjepa:ro
+      - ./ui/server:/app/ui/server:ro
+    command: python -m uvicorn ui.server.main:app --host 0.0.0.0 --port 8300 --reload
+
+  ui-frontend:
+    command: npm run dev             # Mode dev Next.js (hot reload)
+    volumes:
+      - ./ui/web:/app:delegated      # Mount UI code pour hot reload
+      - /app/node_modules            # Preserve node_modules from container
+      - /app/.next                   # Preserve .next build cache
