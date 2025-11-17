@@ -1,0 +1,43 @@
+# Latent Decoder Training Configuration
+# Philosophy: Train decoder AFTER R-JEPA is frozen (world model as ground truth)
+
+# Model architecture
+model:
+  latent_dim: 4096              # Input latent dimension (Qwen3-8B layer -2)
+  decoder_dim: 1024             # Decoder hidden dimension (small, separate model)
+  depth: 4                      # Number of Transformer decoder layers
+  num_heads: 8
+  mlp_ratio: 4.0
+  dropout: 0.1
+  max_seq_len: 256              # Max tokens per step
+  tie_embeddings: true          # Tie input/output embeddings (reduces params)
+
+# Tokenizer
+tokenizer:
+  name: "Qwen/Qwen3-8B-Instruct"  # Use same tokenizer as student LLM
+
+# Data paths
+data:
+  latents_dir: "data/latents"                       # Directory with latent shards
+  cots_train_path: "data/processed/cots_train.parquet"
+  cots_val_path: "data/processed/cots_val.parquet"
+  llm_tag: "qwen3-8b"                               # LLM tag
+  num_workers: 4
+
+# Training hyperparameters
+training:
+  batch_size: 32
+  lr: 1e-4                      # Learning rate (AdamW)
+  num_epochs: 10
+  device: "cuda"
+  use_amp: true                 # Automatic mixed precision (bfloat16)
+  grad_clip: 1.0                # Gradient clipping norm
+  log_interval: 100             # Log every N batches
+  save_dir: "data/checkpoints/decoder-qwen3-8b"
+  save_interval: 1              # Save every N epochs
+
+# Logging
+logging:
+  wandb_enabled: false          # Enable W&B logging (set true if wandb available)
+  wandb_project: "rjepa-decoder"
+  wandb_entity: null
