@@ -1,6 +1,6 @@
-# ═══════════════════════════════════════════════════════════════════════════════
+# -------------------------------------------------------------------------------
 # R-JEPA Training Configuration
-# ═══════════════════════════════════════════════════════════════════════════════
+# -------------------------------------------------------------------------------
 
 # Model architecture
 model:
@@ -21,8 +21,9 @@ model:
     loss_type: "l1"  # L1 or L2
     var_reg_weight: 0.01  # Variance regularization weight
     var_reg_target: 1.0  # Target variance
-    contrastive_weight: 0.0  # Contrastive loss weight (0 = disabled)
+    contrastive_weight: 0.1  # Contrastive loss weight (ACTIVE by default)
     contrastive_temperature: 0.07
+    use_hard_negatives: true  # Use hard negatives from incorrect CoTs
 
 # Masking strategy
 masker:

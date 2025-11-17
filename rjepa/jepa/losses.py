@@ -30,8 +30,9 @@ class JEPALoss(nn.Module):
         loss_type: str = "l1",
         var_reg_weight: float = 0.01,
         var_reg_target: float = 1.0,
-        contrastive_weight: float = 0.0,
+        contrastive_weight: float = 0.1,  # CHANGED: Now ACTIVE by default
         contrastive_temperature: float = 0.07,
+        use_hard_negatives: bool = True,  # NEW: Use hard negatives from incorrect CoTs
     ):
         """
         Initialize JEPA loss.
@@ -40,8 +41,9 @@ class JEPALoss(nn.Module):
             loss_type: "l1" or "l2" (L1 is more robust, recommended)
             var_reg_weight: Weight for variance regularization
             var_reg_target: Target variance (1.0 = unit variance)
-            contrastive_weight: Weight for contrastive loss (0.0 = disabled)
+            contrastive_weight: Weight for contrastive loss (0.1 = ACTIVE by default)
             contrastive_temperature: Temperature for contrastive loss
+            use_hard_negatives: Use hard negatives from incorrect CoTs (recommended)
         """
         super().__init__()
 
@@ -50,11 +52,13 @@ class JEPALoss(nn.Module):
         self.var_reg_target = var_reg_target
         self.contrastive_weight = contrastive_weight
         self.contrastive_temperature = contrastive_temperature
+        self.use_hard_negatives = use_hard_negatives
 
         logger.info(
             f"JEPALoss initialized: "
             f"type={loss_type}, var_reg={var_reg_weight}, "
-            f"contrastive={contrastive_weight}"
+            f"contrastive={contrastive_weight} (ACTIVE), "
+            f"hard_negatives={use_hard_negatives}"
         )
 
     def reconstruction_loss(
@@ -130,12 +134,15 @@ class JEPALoss(nn.Module):
         pred: torch.Tensor,
         target: torch.Tensor,
         mask: torch.Tensor,
+        hard_negatives: Optional[torch.Tensor] = None,
     ) -> torch.Tensor:
         """
-        Contrastive loss (InfoNCE-style).
+        Contrastive loss (InfoNCE-style) with optional hard negatives.
 
         For each target step, treat its prediction as positive,
         and predictions of other steps in the batch as negatives.
+
+        Optionally add hard negatives from incorrect CoTs for better discrimination.
 
         This makes the model more discriminative: not just predicting
         "something plausible", but the ACTUAL next step.
@@ -144,6 +151,7 @@ class JEPALoss(nn.Module):
             pred: [B, S, D] predicted latents
             target: [B, S, D] target latents
             mask: [B, S] boolean mask (True = target step)
+            hard_negatives: Optional [M, D] hard negative latents from incorrect CoTs
 
         Returns:
             Scalar loss
@@ -159,12 +167,24 @@ class JEPALoss(nn.Module):
         pred_norm = F.normalize(pred_flat, dim=-1)  # [N, D]
         target_norm = F.normalize(target_flat, dim=-1)  # [N, D]
 
-        # Similarity matrix
-        sim_matrix = torch.matmul(pred_norm, target_norm.T)  # [N, N]
+        # Similarity matrix: pred @ [target | hard_negatives]^T
+        if hard_negatives is not None and hard_negatives.size(0) > 0:
+            # Add hard negatives to similarity computation
+            hard_negatives_norm = F.normalize(hard_negatives, dim=-1)  # [M, D]
+
+            # Concatenate targets and hard negatives
+            all_targets = torch.cat([target_norm, hard_negatives_norm], dim=0)  # [N+M, D]
+
+            # Similarity matrix
+            sim_matrix = torch.matmul(pred_norm, all_targets.T)  # [N, N+M]
+        else:
+            # Standard InfoNCE without hard negatives
+            sim_matrix = torch.matmul(pred_norm, target_norm.T)  # [N, N]
+
         sim_matrix = sim_matrix / self.contrastive_temperature
 
-        # Positive pairs are on diagonal
-        labels = torch.arange(sim_matrix.size(0), device=sim_matrix.device)
+        # Positive pairs are on diagonal (first N positions)
+        labels = torch.arange(pred_norm.size(0), device=sim_matrix.device)
 
         # Cross-entropy loss
         loss = F.cross_entropy(sim_matrix, labels)
@@ -176,6 +196,7 @@ class JEPALoss(nn.Module):
         pred: torch.Tensor,
         target: torch.Tensor,
         target_mask: torch.Tensor,
+        hard_negatives: Optional[torch.Tensor] = None,
     ) -> Dict[str, torch.Tensor]:
         """
         Compute total loss.
@@ -184,6 +205,7 @@ class JEPALoss(nn.Module):
             pred: [B, S, D] predicted latents
             target: [B, S, D] target latents (from EMA encoder)
             target_mask: [B, S] boolean mask (True = target position)
+            hard_negatives: Optional [M, D] hard negative latents from incorrect CoTs
 
         Returns:
             Dict with keys:
@@ -207,9 +229,11 @@ class JEPALoss(nn.Module):
             "var_reg_loss": var_reg_loss,
         }
 
-        # Contrastive loss (optional)
+        # Contrastive loss (NOW ACTIVE by default with weight=0.1)
         if self.contrastive_weight > 0:
-            contrastive_loss = self.contrastive_loss(pred, target, target_mask)
+            contrastive_loss = self.contrastive_loss(
+                pred, target, target_mask, hard_negatives=hard_negatives
+            )
             total_loss = total_loss + self.contrastive_weight * contrastive_loss
             losses["loss"] = total_loss
             losses["contrastive_loss"] = contrastive_loss
