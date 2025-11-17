@@ -22,6 +22,13 @@ from rjepa.evaluation import (
     run_ab_test,
     compare_modes,
 )
+from rjepa.evaluation.extended_benchmarks import (
+    load_mmlu,
+    load_bbh,
+    load_arc,
+    load_hellaswag,
+    create_extended_benchmark_suite,
+)
 from rjepa.llm.adapter import LLMAdapter
 from rjepa.jepa.client import RJEPAClient
 from rjepa.inference import rerank_cots_with_jepa
@@ -35,15 +42,17 @@ def load_benchmark_task(
     split: str = "test",
     num_samples: Optional[int] = None,
     difficulty: Optional[str] = None,
+    category: Optional[str] = None,  # For MMLU
 ) -> List[Dict[str, Any]]:
     """
     Load benchmark dataset.
 
     Args:
-        benchmark_name: "gsm8k", "math", or "humaneval"
+        benchmark_name: "gsm8k", "math", "humaneval", "mmlu", "bbh", "arc", "hellaswag"
         split: "train" or "test"
         num_samples: Limit number of samples
         difficulty: Filter by difficulty (MATH only)
+        category: MMLU category ("stem", "humanities", "social_sciences", "other", "all")
 
     Returns:
         List of problems
@@ -51,13 +60,37 @@ def load_benchmark_task(
     logger.info(f"Loading benchmark: {benchmark_name} ({split} split, {num_samples or 'all'} samples)")
 
     if benchmark_name == "gsm8k":
-        return load_gsm8k(split=split, num_samples=num_samples)
+        problems = load_gsm8k(split=split, num_samples=num_samples)
     elif benchmark_name == "math":
-        return load_math(split=split, num_samples=num_samples, difficulty=difficulty)
+        problems = load_math(split=split, num_samples=num_samples, difficulty=difficulty)
     elif benchmark_name == "humaneval":
-        return load_humaneval(num_samples=num_samples)
+        problems = load_humaneval(num_samples=num_samples)
+
+    # Extended benchmarks (Phase 17)
+    elif benchmark_name == "mmlu":
+        problems = load_mmlu(
+            category=category,
+            split=split,
+            max_samples_per_subject=num_samples,
+        )
+    elif benchmark_name == "bbh":
+        problems = load_bbh(max_samples_per_task=num_samples)
+    elif benchmark_name == "arc":
+        problems = load_arc(
+            challenge_only=True,
+            split=split,
+            max_samples=num_samples,
+        )
+    elif benchmark_name == "hellaswag":
+        problems = load_hellaswag(split=split, max_samples=num_samples)
     else:
         raise ValueError(f"Unknown benchmark: {benchmark_name}")
+
+    # Convert Problem objects to dicts for compatibility
+    if problems and hasattr(problems[0], 'model_dump'):
+        problems = [p.model_dump() for p in problems]
+
+    return problems
 
 
 @task(name="evaluate_baseline")
@@ -351,8 +384,15 @@ def main():
         "--benchmark",
         type=str,
         required=True,
-        choices=["gsm8k", "math", "humaneval"],
+        choices=["gsm8k", "math", "humaneval", "mmlu", "bbh", "arc", "hellaswag"],
         help="Benchmark to evaluate on"
+    )
+    parser.add_argument(
+        "--category",
+        type=str,
+        default=None,
+        choices=["stem", "humanities", "social_sciences", "other", "all"],
+        help="MMLU category (only for --benchmark mmlu)"
     )
     parser.add_argument(
         "--llm",

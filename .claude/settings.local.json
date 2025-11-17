@@ -5,7 +5,14 @@
       "Bash(git commit:*)",
       "Bash(python scripts/validate_phase9.py:*)",
       "Bash(python scripts/validate_phase10.py:*)",
-      "Bash(python scripts/validate_phase11.py:*)"
+      "Bash(python scripts/validate_phase11.py:*)",
+      "Bash(python scripts/validate_phase12.py:*)",
+      "Bash(python scripts/validate_phase13.py:*)",
+      "Bash(python scripts/validate_phase14.py:*)",
+      "Bash(python scripts/validate_phase15.py:*)",
+      "Bash(python scripts/validate_phase16.py:*)",
+      "Bash(python scripts/validate_phase17.py:*)",
+      "Bash(git remote set-url:*)"
     ],
     "deny": [],
     "ask": []
