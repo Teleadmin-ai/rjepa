@@ -5,6 +5,7 @@
 # Environment & Secrets
 .env
 .env.local
+.tokengithub
 *.key
 *.pem
 secrets/
