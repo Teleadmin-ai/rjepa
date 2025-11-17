@@ -1,0 +1,97 @@
+# ═══════════════════════════════════════════════════════════════════════════════
+# R-JEPA Base Configuration (MVP)
+# ═══════════════════════════════════════════════════════════════════════════════
+
+model:
+  # Architecture
+  dim: 4096  # Input dimension (Qwen3-8B hidden_size)
+  encoder:
+    depth: 12  # Number of transformer blocks
+    num_heads: 16
+    mlp_ratio: 4.0
+    dropout: 0.1
+    qkv_bias: true
+
+  predictor:
+    depth: 8  # Shallower than encoder
+    predictor_dim: 384  # Predictor embedding dimension
+    num_heads: 12
+    mlp_ratio: 4.0
+    dropout: 0.1
+
+  # EMA (Exponential Moving Average for target encoder)
+  ema_momentum_start: 0.996
+  ema_momentum_end: 1.0
+  ema_momentum_warmup_steps: 1000
+
+  # Domain embeddings (optional)
+  domain_embed_dim: 64
+  num_domains: 50  # Max number of domains
+
+# Masking strategy
+masking:
+  type: "contiguous"  # "random", "contiguous", "hierarchical"
+  min_ratio: 0.3  # Minimum mask ratio
+  max_ratio: 0.7  # Maximum mask ratio
+  contiguous_block_size: [2, 5]  # For contiguous masking
+
+# Loss configuration
+loss:
+  type: "l1"  # L1 loss on latent predictions
+  var_reg_weight: 0.01  # Variance regularization to avoid collapse
+  contrastive_weight: 0.0  # Optional contrastive loss (0 = disabled)
+  contrastive_temperature: 0.07
+  num_negatives: 4
+
+# Training
+training:
+  batch_size: 64
+  num_epochs: 10
+  learning_rate: 3.0e-4
+  weight_decay: 0.05
+  grad_clip_norm: 1.0
+  warmup_steps: 500
+
+  # Mixed precision
+  amp: "bf16"  # "bf16", "fp16", or null
+
+  # Optimizer
+  optimizer: "adamw"
+  betas: [0.9, 0.999]
+
+  # Scheduler
+  scheduler: "cosine"
+  min_lr: 1.0e-6
+
+  # Checkpointing
+  checkpoint_every_n_epochs: 1
+  keep_last_n_checkpoints: 5
+
+# Data
+data:
+  train_latents_path: "data/latents/qwen3-8b/train"
+  val_latents_path: "data/latents/qwen3-8b/val"
+  num_workers: 4
+  prefetch_factor: 2
+  pin_memory: true
+
+# Logging
+logging:
+  wandb_enabled: true
+  wandb_project: "rjepa-training"
+  log_every_n_steps: 10
+  log_grad_norm: true
+  log_learning_rate: true
+
+# Evaluation
+evaluation:
+  eval_every_n_epochs: 1
+  metrics:
+    - "jepa_loss"
+    - "jepa_loss_by_domain"
+    - "variance_preserved"
+
+meta:
+  description: "R-JEPA base configuration for Qwen3-8B"
+  version: "0.1.0"
+  created_at: "2025-01-17"

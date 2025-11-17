@@ -1,0 +1,45 @@
+# ═══════════════════════════════════════════════════════════════════════════════
+# Qwen3-8B Student LLM Configuration
+# ═══════════════════════════════════════════════════════════════════════════════
+
+model:
+  name: "Qwen/Qwen3-8B-Instruct"
+  architecture: "qwen3"
+  hidden_size: 4096
+  num_layers: 32
+  num_attention_heads: 32
+  vocab_size: 151936
+
+quantization:
+  type: "awq-4bit"  # "awq-4bit", "gptq-4bit", or null
+  group_size: 128
+  bits: 4
+
+generation:
+  max_new_tokens: 512
+  temperature: 0.7
+  top_p: 0.9
+  top_k: 50
+  do_sample: true
+  num_return_sequences: 1
+
+latent_extraction:
+  layer_idx: -2  # Avant-dernière couche (layer 30/32)
+  aggregation: "mean"  # Mean pooling sur les tokens du step
+  dtype: "float16"  # Précision pour sauvegarde latents
+
+serving:
+  max_model_len: 4096
+  gpu_memory_utilization: 0.85
+  trust_remote_code: true
+  enforce_eager: false  # Allow CUDA graphs for speed
+
+step_segmentation:
+  method: "guided"  # "guided" (force "Step X:") or "automatic" (heuristic)
+  step_token: "Step"
+  regex_pattern: "Step\\s+\\d+:"
+
+meta:
+  description: "Qwen3-8B configuration for R-JEPA MVP"
+  rejouable: true  # Compatible avec Qwen3-32B/70B (même famille)
+  hidden_size_family: [4096, 5120, 8192]  # Qwen3-8B, 32B, 70B

@@ -1,0 +1,169 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "rjepa"
+version = "0.1.0"
+description = "Reasoning-JEPA: World Model for Text Reasoning"
+readme = "README.md"
+requires-python = ">=3.11"
+license = {text = "MIT"}
+authors = [
+    {name = "Teleadmin AI", email = "contact@teleadmin.ai"}
+]
+keywords = ["jepa", "world-model", "reasoning", "llm", "latent-space"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3.11",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+
+dependencies = [
+    # Core Deep Learning
+    "torch>=2.1.0",
+    "transformers>=4.38.0",
+    "accelerate>=0.25.0",
+    "bitsandbytes>=0.41.0",
+    "safetensors>=0.4.0",
+
+    # Web API
+    "fastapi>=0.109.0",
+    "uvicorn[standard]>=0.27.0",
+    "python-multipart>=0.0.6",
+    "websockets>=12.0",
+    "httpx>=0.26.0",
+
+    # Configuration
+    "pydantic>=2.5.0",
+    "pydantic-settings>=2.1.0",
+    "pyyaml>=6.0",
+
+    # Data Processing
+    "pyarrow>=15.0.0",
+    "pandas>=2.1.0",
+    "duckdb>=0.10.0",
+    "datasets>=2.16.0",
+
+    # APIs
+    "openai>=1.10.0",  # For OpenAI-compatible teacher APIs
+    "anthropic>=0.18.0",  # For Anthropic SDK (optional)
+
+    # Utilities
+    "numpy>=1.24.0",
+    "scipy>=1.11.0",
+    "scikit-learn>=1.3.0",
+    "tqdm>=4.66.0",
+    "rich>=13.7.0",
+    "click>=8.1.0",
+
+    # Math validation
+    "sympy>=1.12",
+]
+
+[project.optional-dependencies]
+train = [
+    "wandb>=0.16.0",
+    "prefect>=2.14.0",
+    "mlflow>=2.10.0",
+]
+
+server = [
+    "vllm>=0.3.0",
+    # Fallback if vLLM doesn't work on Windows
+    # "text-generation-inference",
+]
+
+ui = [
+    # Next.js handled separately
+]
+
+dev = [
+    "ruff>=0.2.0",
+    "mypy>=1.8.0",
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.23.0",
+    "pytest-cov>=4.1.0",
+    "ipython>=8.20.0",
+    "jupyter>=1.0.0",
+]
+
+all = [
+    "rjepa[train,server,dev]",
+]
+
+[project.scripts]
+rjepa = "rjepa.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/Teleadmin-ai/rjepa"
+Documentation = "https://github.com/Teleadmin-ai/rjepa/blob/main/README.md"
+Repository = "https://github.com/Teleadmin-ai/rjepa"
+Issues = "https://github.com/Teleadmin-ai/rjepa/issues"
+
+[tool.setuptools]
+packages = ["rjepa"]
+
+[tool.setuptools.package-data]
+rjepa = ["py.typed", "config/*.yaml"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = [
+    "E",  # pycodestyle errors
+    "W",  # pycodestyle warnings
+    "F",  # pyflakes
+    "I",  # isort
+    "B",  # flake8-bugbear
+    "C4", # flake8-comprehensions
+    "UP", # pyupgrade
+]
+ignore = [
+    "E501",  # line too long (handled by formatter)
+    "B008",  # do not perform function calls in argument defaults
+    "C901",  # too complex
+]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = false
+disallow_incomplete_defs = false
+check_untyped_defs = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+strict_equality = true
+
+[[tool.mypy.overrides]]
+module = [
+    "transformers.*",
+    "torch.*",
+    "vllm.*",
+    "wandb.*",
+    "prefect.*",
+]
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = [
+    "--strict-markers",
+    "--tb=short",
+    "--cov=rjepa",
+    "--cov-report=term-missing",
+]

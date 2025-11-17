@@ -1,0 +1,53 @@
+# ═══════════════════════════════════════════════════════════════════════════════
+# Build Latents Pipeline Configuration
+# ═══════════════════════════════════════════════════════════════════════════════
+
+# Input data
+input:
+  cots_parquet_path: "data/processed/cots/{split}.parquet"
+  problems_parquet_path: "data/processed/problems/{split}.parquet"
+
+# Output data
+output:
+  latents_root: "data/latents/{llm_tag}/{split}"
+  shard_size: 10000  # Number of samples per shard
+  compression: "zstd"  # Parquet compression ("zstd", "snappy", "gzip")
+
+# LLM configuration
+llm:
+  model_name: "Qwen/Qwen3-8B-Instruct"
+  config_path: "configs/llm/qwen3-8b.yaml"
+  device: "cuda"
+  batch_size: 8  # Batch size for latent extraction
+
+  # Extraction params
+  layer_idx: -2
+  aggregation: "mean"  # Mean pooling over tokens
+  dtype: "float16"
+
+# Processing
+processing:
+  num_workers: 4
+  max_retries: 3
+  skip_existing: true  # Skip already processed samples
+
+# Sharding & Storage
+storage:
+  format: "parquet+safetensors"  # Metadata in parquet, tensors in safetensors
+  save_tokens: true  # Save raw tokens for replay
+  save_boundaries: true  # Save step boundaries
+
+# Quality checks
+quality:
+  min_steps: 1  # Minimum number of steps
+  max_steps: 50  # Maximum number of steps
+  max_hidden_norm: 100.0  # Max L2 norm for latents (sanity check)
+
+# Logging
+logging:
+  log_every_n_samples: 100
+  save_stats: true  # Save statistics (mean, std, etc.)
+
+meta:
+  description: "Pipeline configuration for building latents from CoTs"
+  version: "1.0.0"

@@ -1,0 +1,222 @@
+# ═══════════════════════════════════════════════════════════════════════════════
+# Teacher LLM Prompts Configuration
+# ═══════════════════════════════════════════════════════════════════════════════
+
+# Problem Generation Prompts
+problem_generation:
+  math: |
+    You are an academic exercise generator specialized in mathematics.
+
+    Domain: {domain}
+    Subdomain: {subdomain}
+    Difficulty: {difficulty}
+    Number of problems: {num_problems}
+
+    Create {num_problems} varied mathematical problems with the following constraints:
+    - Each problem should be self-contained and clearly stated
+    - Include a mix of difficulty levels: easy, medium, hard
+    - Cover different subdomains: algebra, geometry, probability, calculus, etc.
+    - Provide the gold answer for each problem
+
+    Format your response as a JSON array:
+    [
+      {{
+        "problem_id": "math_001",
+        "statement": "...",
+        "answer": "...",
+        "subdomain": "algebra",
+        "difficulty": "easy",
+        "notions": ["linear equations", "solving"]
+      }},
+      ...
+    ]
+
+  code: |
+    You are an academic exercise generator specialized in programming.
+
+    Domain: {domain}
+    Subdomain: {subdomain}
+    Difficulty: {difficulty}
+    Number of problems: {num_problems}
+
+    Create {num_problems} varied programming problems with the following constraints:
+    - Each problem should have a clear specification
+    - Include test cases (inputs/outputs)
+    - Cover different subdomains: algorithms, data structures, system design, etc.
+    - Provide a reference solution
+
+    Format your response as a JSON array:
+    [
+      {{
+        "problem_id": "code_001",
+        "statement": "...",
+        "test_cases": [
+          {{"input": "...", "output": "..."}},
+          ...
+        ],
+        "reference_solution": "...",
+        "subdomain": "algorithms",
+        "difficulty": "medium",
+        "notions": ["sorting", "arrays"]
+      }},
+      ...
+    ]
+
+  logic: |
+    You are an academic exercise generator specialized in logic and reasoning.
+
+    Domain: {domain}
+    Subdomain: {subdomain}
+    Difficulty: {difficulty}
+    Number of problems: {num_problems}
+
+    Create {num_problems} varied logic problems with the following constraints:
+    - Each problem should test logical reasoning skills
+    - Include puzzles, deduction problems, or formal logic
+    - Cover different types: propositional logic, predicate logic, puzzles, etc.
+    - Provide the correct answer with justification
+
+    Format your response as a JSON array:
+    [
+      {{
+        "problem_id": "logic_001",
+        "statement": "...",
+        "answer": "...",
+        "justification": "...",
+        "subdomain": "propositional_logic",
+        "difficulty": "hard",
+        "notions": ["logical_operators", "truth_tables"]
+      }},
+      ...
+    ]
+
+# Chain of Thought Generation Prompts
+cot_generation:
+  system_prompt: |
+    You are a reasoning assistant specialized in structured problem-solving.
+
+    When solving problems, you MUST structure your response as explicit steps:
+    Step 1: [first reasoning step]
+    Step 2: [second reasoning step]
+    ...
+    Step N: [final answer]
+
+    Each step should:
+    - Be clear and self-contained
+    - Show your reasoning process
+    - Build logically on previous steps
+    - Lead to the final answer
+
+  user_prompt: |
+    Problem: {statement}
+
+    Solve this problem step-by-step. Produce {num_samples} distinct reasoning chains.
+
+    For each chain:
+    1. Structure it as explicit "Step X:" steps
+    2. Show your complete reasoning
+    3. End with a clear final answer
+    4. Validate your answer if possible (e.g., check math symbolically)
+
+    Format your response as JSON:
+    {{
+      "chains": [
+        {{
+          "steps": ["Step 1: ...", "Step 2: ...", ...],
+          "final_answer": "...",
+          "validation": {{
+            "is_valid": true/false,
+            "reason": "..."
+          }}
+        }},
+        ...
+      ]
+    }}
+
+# Validation Prompts
+validation:
+  math: |
+    Problem: {statement}
+    Proposed answer: {answer}
+
+    Verify if this answer is correct.
+
+    Steps:
+    1. Re-solve the problem independently
+    2. Compare with the proposed answer
+    3. Check symbolically if possible (e.g., substitute in equation)
+
+    Format your response as JSON:
+    {{
+      "is_valid": true/false,
+      "correct_answer": "...",
+      "reason": "..."
+    }}
+
+  code: |
+    Problem: {statement}
+    Proposed solution:
+    ```
+    {code}
+    ```
+
+    Test cases: {test_cases}
+
+    Verify if this solution is correct.
+
+    Steps:
+    1. Check if the code compiles/runs
+    2. Run the test cases
+    3. Check edge cases
+    4. Assess correctness and efficiency
+
+    Format your response as JSON:
+    {{
+      "is_valid": true/false,
+      "test_results": [
+        {{"input": "...", "expected": "...", "actual": "...", "passed": true/false}},
+        ...
+      ],
+      "reason": "..."
+    }}
+
+  logic: |
+    Problem: {statement}
+    Proposed answer: {answer}
+
+    Verify if this answer is logically correct.
+
+    Steps:
+    1. Analyze the logical structure
+    2. Check for consistency
+    3. Verify against logical rules
+
+    Format your response as JSON:
+    {{
+      "is_valid": true/false,
+      "reason": "..."
+    }}
+
+# Few-shot Examples (for better teacher performance)
+examples:
+  math_cot:
+    - problem: "Solve for x: 2x + 5 = 13"
+      steps:
+        - "Step 1: Subtract 5 from both sides: 2x + 5 - 5 = 13 - 5, so 2x = 8"
+        - "Step 2: Divide both sides by 2: 2x/2 = 8/2, so x = 4"
+        - "Step 3: Verification: 2(4) + 5 = 8 + 5 = 13 ✓"
+      final_answer: "4"
+
+  code_cot:
+    - problem: "Write a function to find the maximum element in a list"
+      steps:
+        - "Step 1: Initialize max_val with the first element"
+        - "Step 2: Iterate through the list starting from the second element"
+        - "Step 3: Update max_val if current element is larger"
+        - "Step 4: Return max_val after iteration"
+      final_answer: "def find_max(lst): max_val = lst[0]; for x in lst[1:]: if x > max_val: max_val = x; return max_val"
+
+meta:
+  version: "1.0.0"
+  description: "Teacher prompts for R-JEPA dataset generation"
+  supported_domains: ["math", "code", "logic"]

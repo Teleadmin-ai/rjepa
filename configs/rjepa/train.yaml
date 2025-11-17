@@ -1,0 +1,61 @@
+# ═══════════════════════════════════════════════════════════════════════════════
+# R-JEPA Training Configuration
+# ═══════════════════════════════════════════════════════════════════════════════
+
+# Model architecture
+model:
+  dim: 4096  # Hidden dimension (Qwen3-8B uses 4096)
+  depth_encoder: 12  # Encoder depth
+  depth_predictor: 8  # Predictor depth
+  num_heads: 16  # Number of attention heads
+  predictor_dim: 2048  # Predictor internal dimension
+  mlp_ratio: 4.0  # MLP expansion ratio
+  dropout: 0.0  # Dropout (0.0 for deterministic training)
+  max_steps: 512  # Maximum sequence length
+  domain_embed_dim: 64  # Domain embedding dimension
+  num_domains: 50  # Number of domain classes
+  ema_momentum: 0.996  # Initial EMA momentum (will be annealed)
+
+  # Loss configuration
+  loss:
+    loss_type: "l1"  # L1 or L2
+    var_reg_weight: 0.01  # Variance regularization weight
+    var_reg_target: 1.0  # Target variance
+    contrastive_weight: 0.0  # Contrastive loss weight (0 = disabled)
+    contrastive_temperature: 0.07
+
+# Masking strategy
+masker:
+  type: "contiguous"  # "random", "contiguous", "hierarchical"
+  min_mask_ratio: 0.3
+  max_mask_ratio: 0.7
+  num_blocks: 1
+
+# Data paths
+data:
+  train_latents_dir: "data/latents/qwen3-8b/train"
+  val_latents_dir: "data/latents/qwen3-8b/val"
+
+# Training configuration
+training:
+  batch_size: 32  # Batch size (adjust for GPU memory)
+  max_epochs: 100  # Total epochs
+  lr: 3.0e-4  # Learning rate
+  weight_decay: 0.05  # Weight decay
+  warmup_epochs: 10  # Warmup epochs
+  grad_clip: 1.0  # Gradient clipping
+  amp_enabled: true  # Automatic Mixed Precision
+  ema_momentum_start: 0.996  # Initial EMA momentum
+  ema_momentum_end: 0.9999  # Final EMA momentum (annealed)
+  num_workers: 4  # DataLoader workers
+  log_interval: 10  # Log every N steps
+  val_interval: 1  # Validate every N epochs
+
+# W&B logging (optional)
+wandb:
+  enabled: false  # Set to true to enable W&B
+  project: "rjepa-training"
+  run_name: "rjepa-qwen3-8b-base"
+
+# Device
+device: "cuda"  # "cuda" or "cpu"

@@ -1,0 +1,55 @@
+# ═══════════════════════════════════════════════════════════════════════════════
+# Train R-JEPA Pipeline Configuration
+# ═══════════════════════════════════════════════════════════════════════════════
+
+# Model config (reference to base config)
+model_config_path: "configs/rjepa/base.yaml"
+
+# Data
+data:
+  latents_root: "data/latents/{llm_tag}"
+  dataset_version: "v1.0.0"  # Dataset version to use
+  train_split: "train"
+  val_split: "val"
+
+  # Filtering
+  filter_by_domain: null  # null = all domains, or list like ["math", "code"]
+  filter_by_difficulty: null  # null = all difficulties, or list like ["medium", "hard"]
+
+  # Augmentation
+  augment: false  # Future: data augmentation on latents
+
+# Training
+training:
+  max_steps: 100000  # Maximum training steps (alternative to epochs)
+  eval_every_n_steps: 1000
+  checkpoint_every_n_steps: 5000
+
+  # Early stopping
+  early_stopping_patience: 5  # Stop if val loss doesn't improve for N evals
+  early_stopping_min_delta: 0.001
+
+  # Distributed
+  distributed: false
+  num_gpus: 1
+  gradient_accumulation_steps: 1
+
+# Output
+output:
+  checkpoint_root: "data/checkpoints/{llm_tag}"
+  experiment_name: "rjepa-{llm_tag}-{dataset_version}"
+  save_best_only: false  # If true, only save checkpoint with best val loss
+
+# Resuming
+resume:
+  enabled: false
+  checkpoint_path: null  # Path to checkpoint to resume from
+
+# Prefect (orchestration)
+prefect:
+  flow_name: "train_rjepa"
+  task_runner: "sequential"  # "sequential" or "distributed"
+
+meta:
+  description: "Training pipeline for R-JEPA"
+  version: "1.0.0"

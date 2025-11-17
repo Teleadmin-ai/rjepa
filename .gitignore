@@ -1,2 +1,66 @@
-.*.swp
-*.pyc
+# ═══════════════════════════════════════════════════════════════════════════════
+# R-JEPA .gitignore
+# ═══════════════════════════════════════════════════════════════════════════════
+
+# Environment & Secrets
+.env
+.env.local
+*.key
+*.pem
+secrets/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+dist/
+*.egg-info/
+.venv/
+venv/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Testing
+.pytest_cache/
+.coverage
+*.log
+
+# Type Checking
+.mypy_cache/
+
+# Data & Models (LARGE FILES)
+data/
+!data/.gitkeep
+logs/
+*.pth
+*.pt
+*.safetensors
+*.parquet
+
+# ML & Training
+wandb/
+.wandb/
+checkpoints/
+.prefect/
+prefect.db
+
+# Node.js (UI)
+node_modules/
+.next/
+out/
+
+# Cache
+.cache/
+.ruff_cache/
+
+# Keep structure
+!.gitkeep
