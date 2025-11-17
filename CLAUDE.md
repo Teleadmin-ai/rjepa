@@ -739,17 +739,44 @@ Config :
 IMPORTANT : On N'utilise PAS directement les SDKs Anthropic/OpenAI.
 On passe par des URLs OpenAI-compatible sur loopback (localhost/LAN).
 
+🚨 RÈGLE CRITIQUE : TEACHERS = APIs EXTERNES UNIQUEMENT 🚨
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ PRINCIPE FONDAMENTAL DE L'ARCHITECTURE R-JEPA                               │
+│                                                                              │
+│ ✅ TEACHERS (APIs externes UNIQUEMENT):                                     │
+│    • Claude Sonnet 4.5 (via tunnel/proxy http://127.0.0.1:443)             │
+│    • GPT-4 (via tunnel/proxy si disponible)                                 │
+│    → Ne touchent JAMAIS au GPU local                                        │
+│    → Qualité maximale pour générer données d'entraînement                   │
+│                                                                              │
+│ ✅ GPU LOCAL (RTX 4090 - 24GB VRAM réservés UNIQUEMENT pour):               │
+│    • Student LLM (Qwen3-8B ~5GB VRAM)                                       │
+│    • R-JEPA model (~2-3GB VRAM)                                             │
+│    → TOTAL: ~7-8GB / 24GB = marge confortable                               │
+│                                                                              │
+│ ❌ INTERDIT : Modèles locaux (Ollama, etc.) comme teachers                  │
+│    → Parasiteraient le GPU nécessaire pour Student + R-JEPA                 │
+│    → Qualité inférieure à Sonnet 4.5 pour l'entraînement                    │
+│                                                                              │
+│ REJOUABILITÉ : Si on upgrade Student (ex: Qwen3-8B → Qwen3-32B):           │
+│    1. Remplacer Student sur GPU local                                       │
+│    2. Régénérer latents + réentraîner R-JEPA (replay)                       │
+│    3. Teacher reste Sonnet 4.5 (jamais changé)                              │
+└─────────────────────────────────────────────────────────────────────────────┘
+
 Configuration .env :
 
-  # Teacher LLM 1 : Claude (via proxy OpenAI-compatible)
-  TEACHER_CLAUDE_BASE_URL=http://localhost:8001/v1
-  TEACHER_CLAUDE_API_KEY=sk-...  # clé proxy
-  TEACHER_CLAUDE_MODEL=claude-3-5-sonnet-20241022
+  # Teacher PRINCIPAL : Claude Sonnet 4.5 (via tunnel OpenAI-compatible)
+  # IMPORTANT: C'est le SEUL teacher actif (APIs externes UNIQUEMENT!)
+  TEACHER_CLAUDE_BASE_URL=http://127.0.0.1:443/v1
+  TEACHER_CLAUDE_API_KEY=dummy  # Pas besoin de vraie clé avec tunnel
+  TEACHER_CLAUDE_MODEL=claude-3-5-sonnet-20241022  # En réalité Sonnet 4.5
 
-  # Teacher LLM 2 : GPT (via proxy OpenAI-compatible)
-  TEACHER_GPT_BASE_URL=http://localhost:8002/v1
-  TEACHER_GPT_API_KEY=sk-...     # clé proxy
-  TEACHER_GPT_MODEL=gpt-4-turbo-2024-04-09
+  # Teacher 2 : GPT-4 (optionnel, si tunnel disponible)
+  # TEACHER_GPT_BASE_URL=http://localhost:8002/v1
+  # TEACHER_GPT_API_KEY=sk-...
+  # TEACHER_GPT_MODEL=gpt-4-turbo-2024-04-09
 
   # Budget limits (USD par job)
   TEACHER_MAX_BUDGET_PER_JOB=50.0
@@ -2005,46 +2032,56 @@ data/
 
 1. LLM TEACHERS EXTERNES (via API OpenAI-compatible)
 
+   🚨 IMPORTANT: Teachers = APIs EXTERNES UNIQUEMENT (jamais de modèles locaux!)
+
    Configuration (.env):
 
-   # Teacher 1: Claude (via proxy loopback)
-   TEACHER_CLAUDE_BASE_URL=http://localhost:8001/v1
-   TEACHER_CLAUDE_API_KEY=sk-xxx
-   TEACHER_CLAUDE_MODEL=claude-3-5-sonnet-20241022
+   # Teacher PRINCIPAL: Claude Sonnet 4.5 (via tunnel localhost:443)
+   # C'est le SEUL teacher actif - qualité maximale pour l'entraînement
+   TEACHER_CLAUDE_BASE_URL=http://127.0.0.1:443/v1
+   TEACHER_CLAUDE_API_KEY=dummy  # Pas besoin de vraie clé avec tunnel
+   TEACHER_CLAUDE_MODEL=claude-3-5-sonnet-20241022  # En réalité Sonnet 4.5
 
-   # Teacher 2: GPT (via proxy loopback)
-   TEACHER_GPT_BASE_URL=http://localhost:8002/v1
-   TEACHER_GPT_API_KEY=sk-xxx
-   TEACHER_GPT_MODEL=gpt-4-turbo-2024-04-09
+   # Teacher 2: GPT-4 (optionnel, commenté par défaut)
+   # TEACHER_GPT_BASE_URL=http://localhost:8002/v1
+   # TEACHER_GPT_API_KEY=sk-xxx
+   # TEACHER_GPT_MODEL=gpt-4-turbo-2024-04-09
 
-   # Teacher 3: Autre API compatible (ex: local LLM, autre provider)
-   TEACHER_CUSTOM_BASE_URL=http://custom-api.example.com/v1
-   TEACHER_CUSTOM_API_KEY=sk-yyy
-   TEACHER_CUSTOM_MODEL=mixtral-8x22b
+   # ❌ PAS de modèles locaux (Ollama, etc.) comme teachers!
+   # → Parasiteraient le GPU nécessaire pour Student + R-JEPA
+   # → GPU local réservé UNIQUEMENT pour Qwen3-8B + R-JEPA
 
-   Usage (rjepa/teacher/multi_source.py):
+   Usage (rjepa/teacher/client.py):
    ```python
-   class MultiSourceTeacher:
+   class TeacherClient:
+       """Client pour teacher API externe (Claude Sonnet 4.5)"""
        def __init__(self):
-           self.teachers = {
-               "claude": TeacherClient(
-                   base_url=os.getenv("TEACHER_CLAUDE_BASE_URL"),
-                   api_key=os.getenv("TEACHER_CLAUDE_API_KEY"),
-                   model=os.getenv("TEACHER_CLAUDE_MODEL")
-               ),
-               "gpt": TeacherClient(...),
-               "custom": TeacherClient(...)
-           }
+           self.client = OpenAI(
+               base_url=os.getenv("TEACHER_CLAUDE_BASE_URL"),
+               api_key=os.getenv("TEACHER_CLAUDE_API_KEY")
+           )
+           self.model = os.getenv("TEACHER_CLAUDE_MODEL")
 
-       def generate_diverse_cots(self, problem: Problem, num_per_teacher: int = 2):
-           """Génère des CoTs diversifiées via plusieurs teachers"""
-           all_cots = []
-           for teacher_name, teacher_client in self.teachers.items():
-               cots = teacher_client.generate_cot(problem, num=num_per_teacher)
-               for cot in cots:
-                   cot.teacher_model = teacher_name
-                   all_cots.append(cot)
-           return all_cots
+       def generate_cot(self, problem: Problem, num_samples: int = 3):
+           """Génère des CoTs validées via Claude Sonnet 4.5"""
+           cots = []
+           for _ in range(num_samples):
+               response = self.client.chat.completions.create(
+                   model=self.model,
+                   messages=[{"role": "user", "content": problem.statement}],
+                   max_tokens=512
+               )
+               cot_text = response.choices[0].message.content
+               # Validation automatique (math/code/logic)
+               is_valid = validate_cot(cot_text, problem)
+               if is_valid:
+                   cots.append(ChainOfThought(
+                       problem_id=problem.problem_id,
+                       steps=parse_steps(cot_text),
+                       is_valid=True,
+                       teacher_model="claude-sonnet-4.5"
+                   ))
+           return cots
    ```
 
 2. DATASETS ACADÉMIQUES PUBLICS
