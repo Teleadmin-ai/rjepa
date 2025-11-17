@@ -1,7 +1,11 @@
 {
   "permissions": {
     "allow": [
-      "Bash(python scripts/validate_phase8.py:*)"
+      "Bash(python scripts/validate_phase8.py:*)",
+      "Bash(git commit:*)",
+      "Bash(python scripts/validate_phase9.py:*)",
+      "Bash(python scripts/validate_phase10.py:*)",
+      "Bash(python scripts/validate_phase11.py:*)"
     ],
     "deny": [],
     "ask": []

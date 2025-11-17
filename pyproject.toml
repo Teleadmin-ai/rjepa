@@ -70,6 +70,13 @@ train = [
     "mlflow>=2.10.0",
 ]
 
+eval = [
+    "matplotlib>=3.8.0",
+    "seaborn>=0.13.0",
+    "datasets>=2.16.0",
+    "scipy>=1.11.0",
+]
+
 server = [
     "vllm>=0.3.0",
     # Fallback if vLLM doesn't work on Windows
@@ -91,7 +98,7 @@ dev = [
 ]
 
 all = [
-    "rjepa[train,server,dev]",
+    "rjepa[train,eval,server,dev]",
 ]
 
 [project.scripts]
