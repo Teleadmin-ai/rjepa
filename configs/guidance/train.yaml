@@ -1,0 +1,37 @@
+# Logit Guidance Training Configuration
+# Philosophy: Train guidance AFTER R-JEPA and LLM are frozen
+
+# Model architecture
+model:
+  latent_dim: 4096              # Input latent dimension (R-JEPA output)
+  vocab_size: 151936            # LLM vocabulary size (Qwen3)
+  hidden_dim: 2048              # MLP hidden dimension
+  dropout: 0.1
+  alpha: 0.3                    # Guidance strength (0=no guidance, 1=full)
+  temperature: 1.0              # Temperature for logit bias
+
+# Data paths
+data:
+  # Dataset should contain: (latent, llm_logits, true_token) tuples
+  # Generated from frozen R-JEPA + frozen LLM
+  train_path: "data/processed/guidance_train.parquet"
+  val_path: "data/processed/guidance_val.parquet"
+  num_workers: 4
+
+# Training hyperparameters
+training:
+  batch_size: 64
+  lr: 3e-4                      # Learning rate (AdamW)
+  num_epochs: 10
+  device: "cuda"
+  use_amp: true                 # Automatic mixed precision
+  grad_clip: 1.0                # Gradient clipping norm
+  log_interval: 100             # Log every N batches
+  save_dir: "data/checkpoints/guidance-qwen3-8b"
+  save_interval: 1              # Save every N epochs
+
+# Logging
+logging:
+  wandb_enabled: false          # Enable W&B logging
+  wandb_project: "rjepa-logit-guidance"
+  wandb_entity: null

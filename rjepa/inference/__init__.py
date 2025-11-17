@@ -1,10 +1,11 @@
 """
 R-JEPA Inference Modes.
 
-Three exploitation modes:
+Four exploitation modes:
 - Re-ranking: Choose best CoT among N candidates
 - Nudge: Correct latents in real-time
 - Plan: Complete missing steps
+- Logit Guidance: Bias LLM logits with predicted latents
 """
 from .rerank import (
     rerank_cots_with_jepa,
@@ -21,6 +22,14 @@ from .plan import (
     auto_complete_missing_steps,
     iterative_refinement,
 )
+from .logit_guidance import (
+    LogitGuidance,
+    LogitGuidanceConfig,
+    create_logit_guidance,
+    guided_generation_step,
+    generate_with_guidance,
+)
+from .logit_guidance_trainer import LogitGuidanceTrainer
 
 __all__ = [
     # Re-ranking
@@ -35,4 +44,11 @@ __all__ = [
     "complete_reasoning_plan",
     "auto_complete_missing_steps",
     "iterative_refinement",
+    # Logit Guidance
+    "LogitGuidance",
+    "LogitGuidanceConfig",
+    "create_logit_guidance",
+    "guided_generation_step",
+    "generate_with_guidance",
+    "LogitGuidanceTrainer",
 ]
