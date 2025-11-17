@@ -164,20 +164,48 @@
 │ • ~700 lignes de code                                                       │
 │ • VALIDATION: ✅ Tous tests passent (service + client + endpoints OK)       │
 │                                                                              │
-│ PHASES RESTANTES (8-11) :                                       ⏳ À VENIR  │
-│ • Phase 8: Inference Modes (rerank, nudge, plan)                            │
+│ PHASE 8 : INFERENCE MODES (rerank, nudge, plan)               ✅ COMPLETE │
+│ • rjepa/inference/rerank.py (Re-ranking CoT candidates, 300+ lignes)       │
+│   - rerank_cots_with_jepa(): Génère N candidates, choisit meilleure        │
+│   - rerank_existing_cots(): Re-rank candidates existants                   │
+│   - rerank_with_ensembling(): Top-K voting/consensus                       │
+│   - Score composite: alpha*logprob + beta*(-JEPA-loss) + gamma*penalty     │
+│ • rjepa/inference/nudge.py (Correction latente, 250+ lignes)               │
+│   - nudge_reasoning_stepwise(): Correction step-by-step avec lambda        │
+│   - nudge_with_regeneration(): Régénère steps suspects (JEPA threshold)    │
+│   - nudge_with_beam_search(): Beam search guidé par JEPA                   │
+│   - Lambda nudge: H_corrected = (1-λ)*H_original + λ*H_pred                │
+│ • rjepa/inference/plan.py (Complétion steps, 250+ lignes)                  │
+│   - complete_reasoning_plan(): Prédit latents pour steps manquants         │
+│   - auto_complete_missing_steps(): Auto-détecte gaps et complète           │
+│   - iterative_refinement(): Raffinement itératif (N iterations)            │
+│   - Décodage: latent→text via prompting LLM                                │
+│ • rjepa/inference/__init__.py (exports)                                    │
+│ • tests/test_inference.py (9 tests, 200+ lignes)                           │
+│   - test_rerank_cots_with_jepa                                              │
+│   - test_rerank_existing_cots                                               │
+│   - test_nudge_reasoning_stepwise                                           │
+│   - test_nudge_with_regeneration                                            │
+│   - test_complete_reasoning_plan                                            │
+│   - test_rerank_with_different_weights                                      │
+│   - Mock LLM + R-JEPA client                                                │
+│ • scripts/validate_phase8.py                                                │
+│ • ~800 lignes de code                                                       │
+│ • VALIDATION: ✅ Tous tests passent (3 modes fonctionnels)                  │
+│                                                                              │
+│ PHASES RESTANTES (9-11) :                                       ⏳ À VENIR  │
 │ • Phase 9: Frontend (Next.js chat + monitoring)                             │
 │ • Phase 10: Docker Compose & Intégration                                    │
 │ • Phase 11: Évaluation & Benchmarks                                         │
 └─────────────────────────────────────────────────────────────────────────────┘
 
-PROGRESSION GLOBALE: [████████████████░░░░] 73% (8/11 phases complètes)
+PROGRESSION GLOBALE: [████████████████████] 82% (9/11 phases complètes)
 
-LIGNES DE CODE ÉCRITES: ~9500+
-FICHIERS CRÉÉS: ~93+
-TESTS UNITAIRES: 51 (tous passent ✅)
+LIGNES DE CODE ÉCRITES: ~10300+
+FICHIERS CRÉÉS: ~98+
+TESTS UNITAIRES: 60 (tous passent ✅)
 
-PROCHAIN MILESTONE: Phase 8 (Inference Modes) - rerank, nudge, plan - intégration R-JEPA avec student LLM.
+PROCHAIN MILESTONE: Phase 9 (Frontend) - Next.js chat UI + monitoring jobs + intégration complète.
 
 ═══════════════════════════════════════════════════════════════════════════════
 🌍 PHILOSOPHIE WORLD MODEL — LA VISION PROFONDE

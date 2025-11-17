@@ -1,8 +1,7 @@
 {
   "permissions": {
     "allow": [
-      "Bash(python scripts/validate_phase7.py:*)",
-      "Bash(python -m pytest:*)"
+      "Bash(python scripts/validate_phase8.py:*)"
     ],
     "deny": [],
     "ask": []
