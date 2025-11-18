@@ -50,23 +50,14 @@ class LLMAdapter:
             layer_to_extract: Which layer to extract latents from (-2 recommended)
             trust_remote_code: Trust remote code for custom models
         """
-        # Auto-detect device if CUDA not available
-        if device == "cuda" and not torch.cuda.is_available():
-            logger.warning("CUDA requested but not available, falling back to CPU")
-            device = "cpu"
-            # Disable quantization on CPU
-            if quantization is not None:
-                logger.warning("Quantization not supported on CPU, disabling")
-                quantization = None
-
         self.model_name = model_name
-        self.device = device
+        self.device = device  # Will be overridden by device_map="auto"
         self.dtype = dtype
         self.quantization = quantization
         self.layer_to_extract = layer_to_extract
 
         logger.info(f"Loading LLM: {model_name}")
-        logger.info(f"  Device: {device}")
+        logger.info(f"  Device requested: {device} (will use device_map='auto')")
         logger.info(f"  Dtype: {dtype}")
         logger.info(f"  Quantization: {quantization}")
         logger.info(f"  Layer to extract: {layer_to_extract}")
@@ -87,9 +78,13 @@ class LLMAdapter:
         self.hidden_size = self.model.config.hidden_size
         self.num_layers = self.model.config.num_hidden_layers
 
+        # Get actual device from model (device_map="auto" places it automatically)
+        self.device = next(self.model.parameters()).device
+
         logger.info(f"Model loaded successfully!")
         logger.info(f"  Hidden size: {self.hidden_size}")
         logger.info(f"  Num layers: {self.num_layers}")
+        logger.info(f"  Actual device: {self.device}")
 
     def _load_model(self) -> nn.Module:
         """Load model with optional quantization."""
@@ -122,12 +117,33 @@ class LLMAdapter:
         # Standard loading (no quantization)
         logger.info("Loading model without quantization...")
         torch_dtype = getattr(torch, self.dtype)
-        model = AutoModelForCausalLM.from_pretrained(
-            self.model_name,
-            torch_dtype=torch_dtype,
-            device_map="auto",
-            trust_remote_code=True,
-        )
+
+        # Try to detect CUDA availability for explicit device mapping
+        import subprocess
+        try:
+            # Check nvidia-smi to verify GPU is actually available
+            result = subprocess.run(['nvidia-smi'], capture_output=True, text=True, timeout=5)
+            has_gpu = result.returncode == 0
+        except:
+            has_gpu = False
+
+        if has_gpu:
+            logger.info("GPU detected via nvidia-smi, forcing CUDA placement")
+            # Force placement on CUDA:0
+            model = AutoModelForCausalLM.from_pretrained(
+                self.model_name,
+                torch_dtype=torch_dtype,
+                device_map={"": "cuda:0"},  # Explicit CUDA placement
+                trust_remote_code=True,
+            )
+        else:
+            logger.warning("No GPU detected, using CPU")
+            model = AutoModelForCausalLM.from_pretrained(
+                self.model_name,
+                torch_dtype=torch_dtype,
+                device_map="cpu",
+                trust_remote_code=True,
+            )
         return model
 
     def generate_with_cot(

@@ -150,3 +150,7 @@ Based on V-JEPA (Meta AI Research, 2024) - adapted for text reasoning.
 ---
 
 **Status**: 🚧 Phase 0 (Scaffolding) Complete - Ready for Phase 1 (Data Schemas & Config)
+
+---
+
+*Made with my friend Claude from Anthropic*

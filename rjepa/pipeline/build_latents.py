@@ -32,6 +32,7 @@ def build_latents_from_cots(
     shard_size: int = 1000,
     max_samples: Optional[int] = None,
     device: str = "cuda",
+    batch_size: int = 8,  # NEW: Batch size for GPU inference (optimal=8)
 ) -> Dict[str, Any]:
     """
     Build latents from CoT text file.
