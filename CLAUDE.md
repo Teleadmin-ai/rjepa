@@ -4732,6 +4732,174 @@ cat data/latents/qwen3-8b/academic/checkpoint_optimized.json
 ls data/latents/qwen3-8b/academic/batch_*.pkl.gz | wc -l
 ```
 
+
+🚀 ROADMAP FUTUR — PHASES 22+ (POST-MVP ENHANCEMENTS)
+═══════════════════════════════════════════════════════════════════════════════
+
+Cette section documente les améliorations futures identifiées (suggestions GPT-5 Pro +
+analyse Claude). Elles seront implémentées APRÈS validation du MVP (Phases 0-21).
+
+Principe directeur : **Commencer simple (JEPA pur), complexifier seulement si prouvé nécessaire**
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ PHASE 22 : TEXT GROUNDING OPTIONNEL (Retrieval-Augmented JEPA)             │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+**OBJECTIF** : Utiliser texte source comme contexte additionnel quand R-JEPA incertain
+
+**APPROCHE** : PAS de fusion architecture, retrieval optionnel basé sur similarité latente
+
+**VALIDATION** : Si gain < 2%, abandonner (principe parcimonie)
+
+**TEMPS ESTIMÉ** : 1-2 semaines
+
+═══════════════════════════════════════════════════════════════════════════════
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ PHASE 23 : DUAL-STREAM EXPÉRIMENTAL (Latent + Text Fusion)                 │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+**OBJECTIF** : Fusionner représentations latentes + textuelles (cross-modal attention)
+
+**⚠️ ATTENTION** : Complexité élevée, seulement SI Phase 22 montre bénéfice clair
+
+**VALIDATION** : Si gain < 5%, ABANDONNER (trop complexe)
+
+**TEMPS ESTIMÉ** : 3-4 semaines
+
+═══════════════════════════════════════════════════════════════════════════════
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ PHASE 24 : RL FINE-TUNING (Boucle LLM ↔ R-JEPA)                            │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+**OBJECTIF** : Boucle itérative où LLM et R-JEPA s'améliorent mutuellement (RLAIF)
+
+**WORKFLOW** :
+1. Train R-JEPA sur latents LLM
+2. Use R-JEPA comme reward model (RL)
+3. Fine-tune LLM → meilleurs CoTs
+4. Re-train R-JEPA sur nouveaux CoTs
+5. Itérer jusqu'à convergence
+
+**⚠️ RISQUES** : Collapse (LLM "hacke" R-JEPA), instabilité
+
+**MITIGATION** : Combiner reward JEPA + validation externe (MathValidator)
+
+**TEMPS ESTIMÉ** : 2-3 mois (très expérimental!)
+
+═══════════════════════════════════════════════════════════════════════════════
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ PHASE 25 : SEGMENTATION ADAPTATIVE (Détection pauses logiques)             │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+**OBJECTIF** : Segmenter sans "Step X:" (généralisation texte libre)
+
+**SOLUTION** : Détection shifts dans latent space (cosine distance)
+
+**AVANTAGES** :
+- ✅ Marche sur N'IMPORTE QUEL texte (conversations, articles)
+- ✅ Détecte pauses logiques naturelles
+- ✅ Généralisable à autres LLMs/domaines
+
+**⭐ HAUTE PRIORITÉ** : Élargit applicabilité énormément!
+
+**TEMPS ESTIMÉ** : 2-3 semaines
+
+═══════════════════════════════════════════════════════════════════════════════
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ PHASE 26 : MULTI-DOMAIN EXPANSION (Culture, Legal, Medical, Science)       │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+**OBJECTIF** : Étendre R-JEPA au-delà math/code/logic
+
+**NOUVEAUX DOMAINES** :
+- Culture (TriviaQA, Natural Questions)
+- Legal (CaseHOLD, LegalBench)
+- Medical (MedQA, PubMedQA)
+- Science (SciQ, ARC-Challenge)
+
+**CHALLENGE** : Validation automatique difficile
+**SOLUTION** : Teacher validation + User feedback
+
+**TEMPS ESTIMÉ** : 1-2 mois
+
+═══════════════════════════════════════════════════════════════════════════════
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ PHASE 27 : LATENT COMPRESSION (Réduction dimensionnalité 4096→1024)        │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+**OBJECTIF** : Scaling à 1M+ exemples
+
+**APPROCHES** :
+- PCA (simple, baseline)
+- VAE (flexible)
+- Product Quantization (compression extrême)
+
+**⚠️ VALIDATION** : MSE < 0.01, similarity preservation > 95%, R-JEPA loss delta < 5%
+
+**RECOMMANDATION** : Tester PCA d'abord, si variance explained > 95% → suffisant!
+
+**TEMPS ESTIMÉ** : 1-2 semaines
+
+═══════════════════════════════════════════════════════════════════════════════
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ PHASE 28 : MULTI-GPU & ENSEMBLE (Scaling & Robustesse)                     │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+**OBJECTIF** : Distribuer training 4+ GPUs, ensemble models
+
+**FEATURES** :
+- Multi-GPU (PyTorch DDP)
+- Ensemble R-JEPA (vote/mean/median)
+- Curriculum Learning (masquage progressif)
+
+**TEMPS ESTIMÉ** : 2-3 semaines
+
+═══════════════════════════════════════════════════════════════════════════════
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ PHASE 29 : UI ENHANCEMENTS (Transparence & Explainability)                 │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+**OBJECTIF** : Améliorer transparence, afficher détails R-JEPA
+
+**FEATURES** :
+- JEPA Score Badge (couleur gradient)
+- Nudge Visualization (magnitude corrections)
+- Live Debugging Mode (logs temps réel)
+- Candidate Comparison (RERANK)
+- Confidence Meter
+
+**⭐ HAUTE PRIORITÉ** : Améliore adoption utilisateur!
+
+**TEMPS ESTIMÉ** : 1 semaine
+
+═══════════════════════════════════════════════════════════════════════════════
+
+📊 RÉCAPITULATIF ROADMAP
+
+**PRIORITÉS RECOMMANDÉES** (après MVP validé) :
+1. ⭐ Phase 25 (Segmentation Adaptative) - Élargit applicabilité énormément
+2. ⭐ Phase 29 (UI Enhancements) - Améliore adoption utilisateur
+3. ✅ Phase 22 (Text Grounding) - Test simple, potentiel gain
+4. ✅ Phase 28 (Multi-GPU) - Si besoin scaler à 1M+ exemples
+5. ✅ Phase 26 (Multi-Domain) - Si succès MVP math/code/logic
+
+**PHASES OPTIONNELLES** (seulement si gain prouvé) :
+- ⚠️ Phase 23 (Dual-Stream) - Complexe, gain incertain
+- ⚠️ Phase 24 (RL Loop) - Très expérimental, risqué
+- ⚠️ Phase 27 (Compression) - Seulement si contraintes mémoire
+
+**PRINCIPE DIRECTEUR** :
+Commencer simple (JEPA pur), complexifier seulement si prouvé nécessaire!
+
+═══════════════════════════════════════════════════════════════════════════════
+
 ═══════════════════════════════════════════════════════════════════════════════
 
 FIN DU CLAUDE.MD
