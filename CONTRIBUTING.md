@@ -1,36 +1,89 @@
-# Contributing to JEPA
-We want to make contributing to this project as easy and transparent as
-possible.
+# Contributing to R-JEPA
 
-## Pull Requests
-We welcome your pull requests.
+We welcome contributions to the R-JEPA (Reasoning Joint Embedding Predictive Architecture) project!
+
+## How to Contribute
+
+### Pull Requests
 
 1. Fork the repo and create your branch from `main`.
 2. If you've added code that should be tested, add tests.
 3. If you've changed APIs, update the documentation.
-4. Ensure the test suite passes.
-5. Make sure your code lints.
-6. If you haven't already, complete the Contributor License Agreement ("CLA").
+4. Ensure the test suite passes: `pytest tests/`
+5. Make sure your code follows our style guidelines (see below).
+6. Submit your pull request!
 
-## Contributor License Agreement ("CLA")
-In order to accept your pull request, we need you to submit a CLA. You only need
-to do this once to work on any of Facebook's open source projects.
+### Issues
 
-Complete your CLA here: <https://code.facebook.com/cla>
+We use GitHub issues to track bugs and feature requests. Please ensure your description is clear and includes:
 
-## Issues
-We use GitHub issues to track public bugs. Please ensure your description is
-clear and has sufficient instructions to be able to reproduce the issue.
+- Steps to reproduce (for bugs)
+- Expected vs actual behavior
+- Your environment (OS, Python version, GPU, etc.)
 
-Facebook has a [bounty program](https://www.facebook.com/whitehat/) for the safe
-disclosure of security bugs. In those cases, please go through the process
-outlined on that page and do not file a public issue.
+### Security Issues
 
-## Coding Style  
-* 4 spaces for indentation rather than tabs
-* 80 character line length
-* PEP8 formatting
+For security vulnerabilities, please **do not** open a public issue. Instead, email us directly at provencal.romain@teleadmin.net with details.
+
+## Development Setup
+
+```bash
+# Clone and setup
+git clone https://github.com/Teleadmin-ai/rjepa.git
+cd rjepa
+
+# Create virtual environment
+python -m venv .venv
+source .venv/Scripts/activate  # Windows Git Bash
+# or: source .venv/bin/activate  # Linux/Mac
+
+# Install dependencies
+pip install -e ".[train,dev]"
+
+# Run tests
+pytest tests/
+```
+
+## Coding Style
+
+- Python 3.11+ required
+- Use `ruff` for linting and formatting
+- Type hints are encouraged
+- Follow PEP 8 guidelines
+- Maximum line length: 100 characters
+
+```bash
+# Format code
+ruff format .
+
+# Check linting
+ruff check .
+
+# Type checking (optional)
+mypy rjepa/
+```
+
+## Commit Messages
+
+We follow conventional commits:
+
+- `feat:` New features
+- `fix:` Bug fixes
+- `docs:` Documentation changes
+- `refactor:` Code refactoring
+- `test:` Adding or updating tests
+- `chore:` Maintenance tasks
+
+Example: `feat: Add support for Llama3 model family`
 
 ## License
-By contributing to this repository, you agree that your contributions will be licensed
-under the LICENSE file in the root directory of this source tree.
+
+By contributing to this repository, you agree that your contributions will be licensed under the CC BY-NC 4.0 license (see LICENSE file).
+
+## Questions?
+
+Feel free to open an issue or reach out to the maintainers.
+
+---
+
+*R-JEPA: A World Model for Text Reasoning*
