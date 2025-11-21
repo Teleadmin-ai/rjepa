@@ -237,10 +237,10 @@ MIT License
 ## Citation
 
 ```bibtex
-@software{rjepa2024,
+@software{rjepa2025,
   title = {R-JEPA: Reasoning Joint Embedding Predictive Architecture},
   author = {Teleadmin AI},
-  year = {2024},
+  year = {2025},
   url = {https://github.com/Teleadmin-ai/rjepa}
 }
 ```
