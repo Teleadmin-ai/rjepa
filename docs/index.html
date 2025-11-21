@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="R-JEPA: Reasoning Joint Embedding Predictive Architecture - A World Model for Text Reasoning inspired by Meta AI's V-JEPA, adapted for textual reasoning sequences.">
-    <meta name="keywords" content="R-JEPA, JEPA, world model, reasoning, AI, machine learning, LLM, text reasoning, predictive architecture, deep learning">
-    <meta name="author" content="Provencal Romain">
+    <meta name="keywords" content="R-JEPA, JEPA, world model, reasoning, AI, machine learning, LLM, text reasoning, predictive architecture, deep learning, Yann LeCun">
+    <meta name="author" content="Romain Music">
     <meta name="robots" content="index, follow">
 
     <!-- Open Graph / Social Media -->
@@ -23,6 +23,9 @@
     <!-- Canonical URL -->
     <link rel="canonical" href="https://cognition4ai.com/">
 
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧠</text></svg>">
+
     <title>R-JEPA | Reasoning Joint Embedding Predictive Architecture</title>
 
     <!-- JSON-LD Structured Data -->
@@ -35,9 +38,13 @@
         "applicationCategory": "Artificial Intelligence",
         "operatingSystem": "Linux, Windows",
         "author": {
+            "@type": "Organization",
+            "name": "Teleadmin",
+            "url": "https://github.com/Teleadmin-ai"
+        },
+        "creator": {
             "@type": "Person",
-            "name": "Provencal Romain",
-            "email": "provencal.romain@teleadmin.net"
+            "name": "Romain Music"
         },
         "codeRepository": "https://github.com/Teleadmin-ai/rjepa",
         "license": "https://creativecommons.org/licenses/by-nc/4.0/",
@@ -57,15 +64,22 @@
             --secondary: #0ea5e9;
             --bg-dark: #0f172a;
             --bg-card: #1e293b;
+            --bg-card-hover: #273449;
             --text: #e2e8f0;
             --text-muted: #94a3b8;
             --accent: #22d3ee;
+            --success: #22c55e;
+            --warning: #f59e0b;
         }
 
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
         }
 
         body {
@@ -81,10 +95,41 @@
             padding: 0 20px;
         }
 
+        /* Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .animate-fade-in {
+            animation: fadeInUp 0.6s ease-out forwards;
+        }
+
         /* Header */
         header {
             padding: 20px 0;
             border-bottom: 1px solid rgba(255,255,255,0.1);
+            position: sticky;
+            top: 0;
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(10px);
+            z-index: 100;
         }
 
         nav {
@@ -98,6 +143,13 @@
             font-weight: 700;
             color: var(--primary);
             text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo-icon {
+            font-size: 1.8rem;
         }
 
         .nav-links {
@@ -110,6 +162,7 @@
             color: var(--text-muted);
             text-decoration: none;
             transition: color 0.3s;
+            font-weight: 500;
         }
 
         .nav-links a:hover {
@@ -118,31 +171,67 @@
 
         /* Hero Section */
         .hero {
-            padding: 100px 0;
+            padding: 120px 0 100px;
             text-align: center;
-            background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(14, 165, 233, 0.1) 100%);
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.15) 0%, rgba(14, 165, 233, 0.1) 50%, rgba(34, 211, 238, 0.05) 100%);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(circle at 30% 20%, rgba(99, 102, 241, 0.1) 0%, transparent 50%),
+                        radial-gradient(circle at 70% 80%, rgba(14, 165, 233, 0.1) 0%, transparent 50%);
+            pointer-events: none;
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 1;
+        }
+
+        .hero-badge {
+            display: inline-block;
+            background: rgba(99, 102, 241, 0.2);
+            color: var(--primary);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            margin-bottom: 20px;
+            border: 1px solid rgba(99, 102, 241, 0.3);
         }
 
         .hero h1 {
-            font-size: 3.5rem;
+            font-size: 4rem;
             margin-bottom: 20px;
-            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 50%, var(--accent) 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
+            letter-spacing: -1px;
         }
 
         .hero .tagline {
             font-size: 1.5rem;
             color: var(--text-muted);
             margin-bottom: 30px;
+            font-weight: 300;
         }
 
         .hero .subtitle {
-            font-size: 1.1rem;
+            font-size: 1.2rem;
             color: var(--text);
             max-width: 700px;
             margin: 0 auto 40px;
+        }
+
+        .hero .subtitle strong {
+            color: var(--accent);
         }
 
         .cta-buttons {
@@ -153,22 +242,26 @@
         }
 
         .btn {
-            padding: 14px 32px;
-            border-radius: 8px;
+            padding: 16px 36px;
+            border-radius: 10px;
             font-size: 1rem;
             font-weight: 600;
             text-decoration: none;
-            transition: all 0.3s;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
         }
 
         .btn-primary {
-            background: var(--primary);
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
             color: white;
+            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
         }
 
         .btn-primary:hover {
-            background: var(--primary-dark);
-            transform: translateY(-2px);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(99, 102, 241, 0.5);
         }
 
         .btn-secondary {
@@ -180,11 +273,87 @@
         .btn-secondary:hover {
             border-color: var(--accent);
             color: var(--accent);
+            transform: translateY(-3px);
+        }
+
+        /* How It Works */
+        .how-it-works {
+            padding: 100px 0;
+            background: var(--bg-card);
+        }
+
+        .how-it-works h2 {
+            text-align: center;
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+        }
+
+        .how-it-works .section-subtitle {
+            text-align: center;
+            color: var(--text-muted);
+            max-width: 600px;
+            margin: 0 auto 60px;
+        }
+
+        .workflow {
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .workflow-step {
+            flex: 1;
+            min-width: 200px;
+            max-width: 250px;
+            text-align: center;
+            padding: 30px 20px;
+            position: relative;
+        }
+
+        .workflow-step::after {
+            content: '';
+            position: absolute;
+            top: 50px;
+            right: -20px;
+            width: 40px;
+            height: 2px;
+            background: linear-gradient(90deg, var(--primary), transparent);
+        }
+
+        .workflow-step:last-child::after {
+            display: none;
+        }
+
+        .step-number {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin: 0 auto 20px;
+            box-shadow: 0 4px 20px rgba(99, 102, 241, 0.4);
+        }
+
+        .workflow-step h3 {
+            color: var(--text);
+            margin-bottom: 10px;
+            font-size: 1.1rem;
+        }
+
+        .workflow-step p {
+            color: var(--text-muted);
+            font-size: 0.95rem;
         }
 
         /* Features */
         .features {
-            padding: 80px 0;
+            padding: 100px 0;
         }
 
         .features h2 {
@@ -195,61 +364,124 @@
 
         .features-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
             gap: 30px;
         }
 
         .feature-card {
             background: var(--bg-card);
-            padding: 30px;
-            border-radius: 12px;
-            border: 1px solid rgba(255,255,255,0.1);
-            transition: transform 0.3s, border-color 0.3s;
+            padding: 35px;
+            border-radius: 16px;
+            border: 1px solid rgba(255,255,255,0.05);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            transform: scaleX(0);
+            transition: transform 0.3s ease;
         }
 
         .feature-card:hover {
-            transform: translateY(-5px);
-            border-color: var(--primary);
+            transform: translateY(-8px);
+            border-color: rgba(99, 102, 241, 0.3);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .feature-card:hover::before {
+            transform: scaleX(1);
+        }
+
+        .feature-icon {
+            font-size: 2.5rem;
+            margin-bottom: 20px;
         }
 
         .feature-card h3 {
-            color: var(--accent);
+            color: var(--text);
             margin-bottom: 15px;
             font-size: 1.3rem;
         }
 
         .feature-card p {
             color: var(--text-muted);
+            line-height: 1.7;
         }
 
         /* Architecture */
         .architecture {
-            padding: 80px 0;
+            padding: 100px 0;
             background: var(--bg-card);
         }
 
         .architecture h2 {
             text-align: center;
             font-size: 2.5rem;
-            margin-bottom: 40px;
+            margin-bottom: 20px;
+        }
+
+        .architecture .section-subtitle {
+            text-align: center;
+            color: var(--text-muted);
+            max-width: 600px;
+            margin: 0 auto 50px;
+        }
+
+        .arch-visual {
+            background: var(--bg-dark);
+            padding: 40px;
+            border-radius: 16px;
+            border: 1px solid rgba(255,255,255,0.1);
+            max-width: 900px;
+            margin: 0 auto;
         }
 
         .arch-diagram {
-            background: var(--bg-dark);
-            padding: 30px;
-            border-radius: 12px;
-            font-family: 'Courier New', monospace;
+            font-family: 'SF Mono', 'Fira Code', 'Courier New', monospace;
             font-size: 0.85rem;
             overflow-x: auto;
             white-space: pre;
             color: var(--text-muted);
-            line-height: 1.4;
+            line-height: 1.5;
         }
+
+        .arch-legend {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            margin-top: 30px;
+            flex-wrap: wrap;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
+
+        .legend-color {
+            width: 16px;
+            height: 16px;
+            border-radius: 4px;
+        }
+
+        .legend-trained { background: var(--success); }
+        .legend-ema { background: var(--warning); }
+        .legend-predictor { background: var(--primary); }
 
         /* Stats */
         .stats {
-            padding: 60px 0;
-            text-align: center;
+            padding: 80px 0;
         }
 
         .stats-grid {
@@ -259,23 +491,36 @@
         }
 
         .stat-item {
-            padding: 20px;
+            text-align: center;
+            padding: 30px;
+            background: var(--bg-card);
+            border-radius: 16px;
+            transition: transform 0.3s ease;
+        }
+
+        .stat-item:hover {
+            transform: scale(1.05);
         }
 
         .stat-value {
-            font-size: 3rem;
+            font-size: 3.5rem;
             font-weight: 700;
-            color: var(--primary);
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
 
         .stat-label {
             color: var(--text-muted);
             margin-top: 10px;
+            font-size: 1rem;
         }
 
         /* Inference Modes */
         .modes {
-            padding: 80px 0;
+            padding: 100px 0;
+            background: var(--bg-card);
         }
 
         .modes h2 {
@@ -286,28 +531,40 @@
 
         .modes-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
             gap: 30px;
         }
 
         .mode-card {
-            background: var(--bg-card);
-            padding: 30px;
-            border-radius: 12px;
+            background: var(--bg-dark);
+            padding: 35px;
+            border-radius: 16px;
             border-left: 4px solid var(--primary);
+            transition: all 0.3s ease;
+        }
+
+        .mode-card:hover {
+            transform: translateX(10px);
+            border-left-color: var(--accent);
         }
 
         .mode-card h3 {
             color: var(--text);
             margin-bottom: 15px;
+            font-size: 1.4rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
 
         .mode-card .status {
             display: inline-block;
             padding: 4px 12px;
             border-radius: 20px;
-            font-size: 0.8rem;
-            margin-bottom: 15px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
         .status-production {
@@ -320,32 +577,146 @@
             color: #0ea5e9;
         }
 
-        /* Footer */
-        footer {
-            padding: 40px 0;
-            border-top: 1px solid rgba(255,255,255,0.1);
-            text-align: center;
+        .mode-card p {
+            color: var(--text-muted);
+            line-height: 1.7;
         }
 
-        footer p {
-            color: var(--text-muted);
+        /* Research Section */
+        .research {
+            padding: 100px 0;
+        }
+
+        .research h2 {
+            text-align: center;
+            font-size: 2.5rem;
             margin-bottom: 20px;
         }
 
-        .footer-links {
-            display: flex;
+        .research .section-subtitle {
+            text-align: center;
+            color: var(--text-muted);
+            max-width: 600px;
+            margin: 0 auto 60px;
+        }
+
+        .papers-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
             gap: 30px;
-            justify-content: center;
-            flex-wrap: wrap;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .paper-card {
+            background: var(--bg-card);
+            padding: 30px;
+            border-radius: 16px;
+            border: 1px solid rgba(255,255,255,0.05);
+            transition: all 0.3s ease;
+        }
+
+        .paper-card:hover {
+            border-color: var(--primary);
+            transform: translateY(-5px);
+        }
+
+        .paper-card h3 {
+            color: var(--text);
+            font-size: 1.1rem;
+            margin-bottom: 10px;
+        }
+
+        .paper-card .authors {
+            color: var(--accent);
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+        }
+
+        .paper-card p {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            margin-bottom: 15px;
+        }
+
+        .paper-card a {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .paper-card a:hover {
+            color: var(--accent);
+        }
+
+        /* Footer */
+        footer {
+            padding: 60px 0 40px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .footer-content {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr;
+            gap: 60px;
+            margin-bottom: 40px;
+        }
+
+        .footer-brand h3 {
+            color: var(--text);
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .footer-brand p {
+            color: var(--text-muted);
+            line-height: 1.7;
+        }
+
+        .footer-links h4 {
+            color: var(--text);
+            margin-bottom: 20px;
+            font-size: 1rem;
+        }
+
+        .footer-links ul {
+            list-style: none;
+        }
+
+        .footer-links li {
+            margin-bottom: 12px;
         }
 
         .footer-links a {
             color: var(--text-muted);
             text-decoration: none;
+            transition: color 0.3s;
         }
 
         .footer-links a:hover {
             color: var(--accent);
+        }
+
+        .footer-bottom {
+            text-align: center;
+            padding-top: 30px;
+            border-top: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .footer-bottom p {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        .footer-bottom a {
+            color: var(--accent);
+            text-decoration: none;
         }
 
         /* Responsive */
@@ -363,7 +734,21 @@
             }
 
             .arch-diagram {
-                font-size: 0.7rem;
+                font-size: 0.65rem;
+            }
+
+            .footer-content {
+                grid-template-columns: 1fr;
+                gap: 40px;
+            }
+
+            .workflow-step::after {
+                display: none;
+            }
+
+            .workflow {
+                flex-direction: column;
+                align-items: center;
             }
         }
     </style>
@@ -372,11 +757,16 @@
     <header>
         <div class="container">
             <nav>
-                <a href="/" class="logo">R-JEPA</a>
+                <a href="/" class="logo">
+                    <span class="logo-icon">🧠</span>
+                    R-JEPA
+                </a>
                 <ul class="nav-links">
+                    <li><a href="#how-it-works">How It Works</a></li>
                     <li><a href="#features">Features</a></li>
                     <li><a href="#architecture">Architecture</a></li>
                     <li><a href="#modes">Inference</a></li>
+                    <li><a href="#research">Research</a></li>
                     <li><a href="https://github.com/Teleadmin-ai/rjepa">GitHub</a></li>
                 </ul>
             </nav>
@@ -385,15 +775,50 @@
 
     <section class="hero">
         <div class="container">
-            <h1>R-JEPA</h1>
-            <p class="tagline">Reasoning Joint Embedding Predictive Architecture</p>
-            <p class="subtitle">
-                A <strong>World Model for Text Reasoning</strong> inspired by Meta AI's V-JEPA.
-                Predicts <em>concepts</em>, not tokens. Learns reasoning "physics" in latent space.
-            </p>
-            <div class="cta-buttons">
-                <a href="https://github.com/Teleadmin-ai/rjepa" class="btn btn-primary">View on GitHub</a>
-                <a href="https://github.com/Teleadmin-ai/rjepa#quick-start" class="btn btn-secondary">Quick Start</a>
+            <div class="hero-content">
+                <span class="hero-badge">Inspired by V-JEPA & Yann LeCun's Vision</span>
+                <h1>R-JEPA</h1>
+                <p class="tagline">Reasoning Joint Embedding Predictive Architecture</p>
+                <p class="subtitle">
+                    A <strong>World Model for Text Reasoning</strong> that predicts <em>concepts</em>, not tokens.
+                    Like a blind person reading braille, R-JEPA learns pure conceptual understanding in latent space.
+                </p>
+                <div class="cta-buttons">
+                    <a href="https://github.com/Teleadmin-ai/rjepa" class="btn btn-primary">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+                        View on GitHub
+                    </a>
+                    <a href="https://github.com/Teleadmin-ai/rjepa#quick-start" class="btn btn-secondary">Quick Start Guide</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="how-it-works" id="how-it-works">
+        <div class="container">
+            <h2>How It Works</h2>
+            <p class="section-subtitle">R-JEPA operates on LLM hidden states to understand and improve reasoning chains</p>
+            <div class="workflow">
+                <div class="workflow-step">
+                    <div class="step-number">1</div>
+                    <h3>Extract Latents</h3>
+                    <p>Extract hidden states from LLM reasoning steps (layer -2)</p>
+                </div>
+                <div class="workflow-step">
+                    <div class="step-number">2</div>
+                    <h3>Mask & Predict</h3>
+                    <p>Mask reasoning steps and predict their latent representations</p>
+                </div>
+                <div class="workflow-step">
+                    <div class="step-number">3</div>
+                    <h3>Learn Invariants</h3>
+                    <p>Learn stable relationships between concepts (like physics of thought)</p>
+                </div>
+                <div class="workflow-step">
+                    <div class="step-number">4</div>
+                    <h3>Guide Reasoning</h3>
+                    <p>Use learned world model to correct, complete, or re-rank reasoning</p>
+                </div>
             </div>
         </div>
     </section>
@@ -403,26 +828,32 @@
             <h2>Core Features</h2>
             <div class="features-grid">
                 <div class="feature-card">
+                    <div class="feature-icon">🎯</div>
                     <h3>Latent Space Prediction</h3>
-                    <p>Operates on LLM hidden states, not tokens. Learns stable relationships between reasoning concepts, like a blind person reading braille - pure conceptual understanding.</p>
+                    <p>Operates on LLM hidden states, not tokens. Learns stable relationships between reasoning concepts - pure conceptual understanding without surface-level noise.</p>
                 </div>
                 <div class="feature-card">
+                    <div class="feature-icon">🔄</div>
                     <h3>Multi-LLM Support</h3>
-                    <p>Works with Qwen3, Llama3, Mistral, DeepSeek, Phi families. Fast calibration adapts to new LLMs in 2-4 hours instead of days.</p>
+                    <p>Works with Qwen3, Llama3, Mistral, DeepSeek, Phi families. Fast calibration adapts to new LLMs in 2-4 hours instead of days of full retraining.</p>
                 </div>
                 <div class="feature-card">
+                    <div class="feature-icon">✅</div>
                     <h3>Validated Training Data</h3>
                     <p>Trains only on verified correct reasoning chains. Mathematical validation (sympy), code execution tests, and teacher model verification ensure truth, not plausibility.</p>
                 </div>
                 <div class="feature-card">
+                    <div class="feature-icon">📈</div>
                     <h3>Continuous Learning</h3>
                     <p>User feedback loop enables nightly retraining. The system improves with usage, like a living organism that learns from interactions.</p>
                 </div>
                 <div class="feature-card">
+                    <div class="feature-icon">📊</div>
                     <h3>Extended Benchmarks</h3>
                     <p>Evaluated on GSM8K, MATH, HumanEval, MMLU (57 subjects), Big-Bench Hard (23 tasks), ARC, and HellaSwag.</p>
                 </div>
                 <div class="feature-card">
+                    <div class="feature-icon">🐳</div>
                     <h3>Docker Ready</h3>
                     <p>7 orchestrated services with Docker Compose. Production-ready deployment with health checks, logging, and monitoring.</p>
                 </div>
@@ -433,22 +864,38 @@
     <section class="architecture" id="architecture">
         <div class="container">
             <h2>Architecture</h2>
-            <div class="arch-diagram">
-                        R-JEPA Model (678M params)
+            <p class="section-subtitle">Dual-encoder architecture with EMA target encoder, inspired by V-JEPA</p>
+            <div class="arch-visual">
+                <div class="arch-diagram">
+                           R-JEPA World Model Architecture
 
   Input: LLM latents [B, S, 4096] (from Qwen3-8B layer -2)
 
-  +-------------------+    +-----------+    +-------------------+
-  | Context Encoder   | -> | Predictor | -> | z_pred            |
-  | (trained)         |    |           |    |                   |
-  +-------------------+    +-----------+    +--------+----------+
-                                                     |
-  +-------------------+                              v
-  | Target Encoder    | ----------------------> z_target
-  | (EMA, frozen)     |                         (targets)
-  +-------------------+
+  ┌─────────────────────┐     ┌─────────────────┐     ┌─────────────────────┐
+  │   Context Encoder   │ ──▶ │    Predictor    │ ──▶ │      z_pred         │
+  │     (trainable)     │     │   (trainable)   │     │  (predicted latents)│
+  └─────────────────────┘     └─────────────────┘     └──────────┬──────────┘
+                                                                  │
+  ┌─────────────────────┐                                        ▼
+  │   Target Encoder    │ ──────────────────────────────▶   z_target
+  │   (EMA, frozen)     │                                   (ground truth)
+  └─────────────────────┘
 
-  Loss = L1(z_pred, z_target) + variance_reg + contrastive
+  Loss = L1(z_pred, z_target) + variance_reg + contrastive_loss</div>
+                <div class="arch-legend">
+                    <div class="legend-item">
+                        <div class="legend-color legend-trained"></div>
+                        <span>Trainable Components</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color legend-ema"></div>
+                        <span>EMA Updated (frozen)</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color legend-predictor"></div>
+                        <span>Prediction Target</span>
+                    </div>
+                </div>
             </div>
         </div>
     </section>
@@ -483,17 +930,38 @@
                 <div class="mode-card">
                     <span class="status status-production">Production</span>
                     <h3>RERANK</h3>
-                    <p>Generate K candidates, select the best by JEPA-loss. Combines logprob with coherence scoring for optimal reasoning chain selection.</p>
+                    <p>Generate K reasoning chain candidates, score each with JEPA-loss, select the most coherent. Combines logprob with coherence scoring for optimal reasoning chain selection.</p>
                 </div>
                 <div class="mode-card">
                     <span class="status status-implemented">Implemented</span>
                     <h3>NUDGE</h3>
-                    <p>Guide generation with predicted latents using Logit Guidance. Token-by-token steering toward coherent reasoning paths.</p>
+                    <p>Guide generation with predicted latents using Logit Guidance. Token-by-token steering toward coherent reasoning paths with formula: logits = llm_logits + alpha * guidance_bias.</p>
                 </div>
                 <div class="mode-card">
                     <span class="status status-implemented">Implemented</span>
                     <h3>PLAN</h3>
-                    <p>Complete missing reasoning steps. Predict latents for gaps in the reasoning chain and decode them to text.</p>
+                    <p>Complete missing reasoning steps. Predict latents for gaps in the reasoning chain and decode them to text. Like a GPS recalculating your route.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="research" id="research">
+        <div class="container">
+            <h2>Research Foundation</h2>
+            <p class="section-subtitle">R-JEPA builds on foundational work in self-supervised learning and world models</p>
+            <div class="papers-grid">
+                <div class="paper-card">
+                    <h3>V-JEPA: Latent Video Prediction for Visual Representation Learning</h3>
+                    <p class="authors">Meta AI, 2024</p>
+                    <p>Self-supervised method that learns representations by predicting masked regions in latent space rather than pixel space.</p>
+                    <a href="https://ai.meta.com/research/publications/v-jepa-latent-video-prediction-for-visual-representation-learning/" target="_blank">Read Paper →</a>
+                </div>
+                <div class="paper-card">
+                    <h3>A Path Towards Autonomous Machine Intelligence</h3>
+                    <p class="authors">Yann LeCun, 2022</p>
+                    <p>Vision for AI systems that learn world models through self-supervised prediction in latent space - the theoretical foundation for JEPA architectures.</p>
+                    <a href="https://openreview.net/pdf?id=BZ5a1r-kVsf" target="_blank">Read Paper →</a>
                 </div>
             </div>
         </div>
@@ -501,14 +969,30 @@
 
     <footer>
         <div class="container">
-            <p>R-JEPA is inspired by <a href="https://ai.meta.com/research/publications/v-jepa-latent-video-prediction-for-visual-representation-learning/" style="color: var(--accent);">V-JEPA</a> (Meta AI, 2024) and <a href="https://openreview.net/pdf?id=BZ5a1r-kVsf" style="color: var(--accent);">A Path Towards Autonomous Machine Intelligence</a> (Yann LeCun, 2022)</p>
-            <div class="footer-links">
-                <a href="https://github.com/Teleadmin-ai/rjepa">GitHub</a>
-                <a href="https://github.com/Teleadmin-ai/rjepa/blob/main/LICENSE">License (CC BY-NC 4.0)</a>
-                <a href="https://github.com/Teleadmin-ai/rjepa/blob/main/CONTRIBUTING.md">Contributing</a>
-                <a href="mailto:provencal.romain@teleadmin.net">Contact</a>
+            <div class="footer-content">
+                <div class="footer-brand">
+                    <h3>🧠 R-JEPA</h3>
+                    <p>A World Model for Text Reasoning. Predict concepts, not tokens. Built by Teleadmin for advancing AI reasoning capabilities through self-supervised learning in latent space.</p>
+                </div>
+                <div class="footer-links">
+                    <h4>Project</h4>
+                    <ul>
+                        <li><a href="https://github.com/Teleadmin-ai/rjepa">GitHub Repository</a></li>
+                        <li><a href="https://github.com/Teleadmin-ai/rjepa#quick-start">Documentation</a></li>
+                        <li><a href="https://github.com/Teleadmin-ai/rjepa/blob/main/CONTRIBUTING.md">Contributing</a></li>
+                    </ul>
+                </div>
+                <div class="footer-links">
+                    <h4>Legal</h4>
+                    <ul>
+                        <li><a href="https://github.com/Teleadmin-ai/rjepa/blob/main/LICENSE">License (CC BY-NC 4.0)</a></li>
+                        <li><a href="mailto:music.romain@teleadmin.net">Contact</a></li>
+                    </ul>
+                </div>
             </div>
-            <p style="margin-top: 30px; font-size: 0.9rem;">&copy; 2025 Provencal Romain. All rights reserved.</p>
+            <div class="footer-bottom">
+                <p>&copy; 2025 <a href="https://github.com/Teleadmin-ai">Teleadmin</a>. Created by Romain Music. All rights reserved.</p>
+            </div>
         </div>
     </footer>
 </body>
