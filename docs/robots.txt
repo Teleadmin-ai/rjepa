@@ -1,0 +1,8 @@
+# Robots.txt for cognition4ai.com (R-JEPA)
+# Allow all crawlers to index the site
+
+User-agent: *
+Allow: /
+
+# Sitemap location
+Sitemap: https://cognition4ai.com/sitemap.xml
