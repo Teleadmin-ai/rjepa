@@ -41,7 +41,6 @@ class LatentDataset(Dataset):
         device: str = "cpu",
         max_samples: Optional[int] = None,
         domain_map: Optional[Dict[str, int]] = None,
-        projection_dim: Optional[int] = None,
     ):
         """
         Initialize dataset.
@@ -54,13 +53,10 @@ class LatentDataset(Dataset):
             device: Device to load tensors to
             max_samples: Optional limit on number of samples
             domain_map: Optional custom domain mapping
-            projection_dim: Optional dimension to project to (if latent_dim != model_dim)
         """
         self.latents_dir = Path(latents_dir)
         self.device = device
         self.domain_map = domain_map or DOMAIN_MAP
-        self.projection_dim = projection_dim
-        self.projection = None
 
         if not self.latents_dir.exists():
             raise ValueError(f"Latents directory not found: {latents_dir}")
@@ -94,23 +90,6 @@ class LatentDataset(Dataset):
                 f"{len(self.latents)} latent tensors"
             )
 
-        # Initialize projection if needed
-        if self.projection_dim is not None:
-            # Get latent dimension from first sample
-            first_latent = next(iter(self.latents.values()))
-            latent_dim = first_latent.shape[-1]
-
-            if latent_dim != self.projection_dim:
-                logger.info(
-                    f"Creating projection layer: {latent_dim} -> {self.projection_dim}"
-                )
-                import torch.nn as nn
-                self.projection = nn.Linear(latent_dim, self.projection_dim, bias=False).to(device)
-                # Initialize with orthogonal weights
-                nn.init.orthogonal_(self.projection.weight)
-            else:
-                logger.info(f"No projection needed (latent_dim == projection_dim = {latent_dim})")
-
     def __len__(self) -> int:
         """Return dataset size."""
         return len(self.metadata)
@@ -126,14 +105,11 @@ class LatentDataset(Dataset):
             (H, domain_id) tuple where:
                 - H: [num_steps, hidden_size] tensor
                 - domain_id: int
-
-        NOTE: Projection removed from Dataset to enable multiprocessing.
-              Projection is now done in the model's forward pass instead.
         """
         metadata = self.metadata[idx]
         cot_id = metadata["cot_id"]
 
-        # Get latent tensor (raw, no projection here)
+        # Get latent tensor
         H = self.latents[cot_id]  # [num_steps, hidden_size]
 
         # Get domain ID

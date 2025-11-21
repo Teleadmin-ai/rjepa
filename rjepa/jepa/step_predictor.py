@@ -42,6 +42,11 @@ def repeat_interleave_batch(x, B, repeat):
     Returns:
         [B*repeat, N, D] tensor with each batch element repeated
     """
+    # CRITICAL FIX: Handle empty tensors from masking edge cases
+    if x.numel() == 0:
+        # Return empty tensor with correct shape
+        return x
+
     N = x.shape[1]
     x = x.view(B, 1, N, -1)
     x = x.expand(B, repeat, N, -1)

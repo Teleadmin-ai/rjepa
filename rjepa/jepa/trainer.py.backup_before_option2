@@ -16,8 +16,7 @@ from torch.utils.data import DataLoader
 from torch.cuda.amp import autocast, GradScaler
 from pathlib import Path
 from typing import Dict, Optional, Any
-from tqdm import tqdm
-import sys
+from rich.progress import Progress, SpinnerColumn, BarColumn, TextColumn, TimeRemainingColumn
 import time
 
 logger = logging.getLogger(__name__)
@@ -37,7 +36,6 @@ class RJEPATrainer:
         model: nn.Module,
         train_loader: DataLoader,
         val_loader: Optional[DataLoader] = None,
-        masker_config: Optional[Dict] = None,  # OPTION 2: Config for GPU-based masking
         optimizer: Optional[torch.optim.Optimizer] = None,
         lr: float = 3e-4,
         weight_decay: float = 0.05,
@@ -81,10 +79,6 @@ class RJEPATrainer:
         self.train_loader = train_loader
         self.val_loader = val_loader
         self.device = device
-
-        # OPTION 2: Store masker config for GPU-based masking
-        self.masker_config = masker_config if masker_config is not None else {"type": "contiguous"}
-        self.masker = None  # Will be created in train_epoch() on GPU
 
         # Optimizer
         if optimizer is None:
@@ -198,51 +192,23 @@ class RJEPATrainer:
         }
         num_batches = 0
 
-        # OPTION 2: Create masker once (lazy init) for GPU-based masking
-        if self.masker is None:
-            from rjepa.jepa.maskers import create_masker, MaskCollator
-            masker = create_masker(self.masker_config)
-            self.masker = MaskCollator(masker, device=self.device)
-            logger.info(f"Created masker on {self.device}: {self.masker_config}")
+        from rich.progress import track
 
-        # Use tqdm with file=sys.stderr and force flush for log compatibility
-        pbar = tqdm(
-            self.train_loader,
-            desc=f"Epoch {self.current_epoch}",
-            total=len(self.train_loader),
-            file=sys.stderr,
-            dynamic_ncols=True,
-            mininterval=1.0,  # Update every second
-        )
-        for batch_idx, batch in enumerate(pbar):
-            # OPTION 2: DataLoader returns list of (H, domain_id) tuples
-            # batch = [(H1, domain_id1), (H2, domain_id2), ...]
-            # where each H has shape [num_steps, hidden_size]
-
-            # OPTION 2: Generate masks on GPU (dynamic masking for generalization)
-            # This is the CRITICAL part - masking happens HERE, not in DataLoader workers
-            # Overhead: ~0.5ms per batch (0.4% of 115ms forward pass)
-            # MaskCollator will:
-            # 1. Move tensors to GPU
-            # 2. Generate masks dynamically
-            # 3. Return dict with keys: latents, context_mask, target_mask
-            masked_batch = self.masker(batch)
-
-            # Extract masks from collated batch (all on CPU from MaskCollator)
-            context_mask_bool = masked_batch["context_mask"]
-            target_mask_bool = masked_batch["target_mask"]
-            latents = masked_batch["latents"]
-            domain_ids = masked_batch.get("domain_ids")
-
-            # Move tensors to GPU in main thread (workers can't create CUDA tensors on Windows)
-            latents = latents.to(self.device)
-            context_mask_bool = context_mask_bool.to(self.device)
-            target_mask_bool = target_mask_bool.to(self.device)
+        for batch_idx, batch in enumerate(track(self.train_loader, description=f"Epoch {self.current_epoch}", total=len(self.train_loader))):
+            # Move batch to device
+            latents = batch["latents"].to(self.device)
+            context_mask_bool = batch["context_mask"].to(self.device)
+            target_mask_bool = batch["target_mask"].to(self.device)
+            domain_ids = batch.get("domain_ids")
             if domain_ids is not None:
                 domain_ids = domain_ids.to(self.device)
 
             # Convert boolean masks to index masks for V-JEPA format
             # V-JEPA expects: List of [B, K] tensors where K = number of positions to keep
+            context_indices = context_mask_bool.nonzero(as_tuple=False)[:, 1]  # Get column indices
+            target_indices = target_mask_bool.nonzero(as_tuple=False)[:, 1]
+
+            # Reshape to [B, K] by batching
             B = latents.size(0)
             context_mask = []
             target_mask = []
@@ -348,8 +314,8 @@ class RJEPATrainer:
             epoch_losses["var_reg_loss"] += outputs["var_reg_loss"].item()
             num_batches += 1
 
-            # Update progress bar with current loss
-            pbar.set_postfix({"loss": f"{loss.item():.4f}", "lr": f"{self.optimizer.param_groups[0]['lr']:.2e}"})
+            # Progress bar metrics (rich.track doesn't support set_postfix)
+            # Metrics are logged to W&B and printed at end of epoch
 
             # Log to W&B
             if self.use_wandb and self.global_step % self.log_interval == 0:
@@ -395,21 +361,12 @@ class RJEPATrainer:
 
         from rich.progress import track
 
-        # OPTION 2: Create masker once for GPU-based masking (same as train_epoch)
-        if self.masker is None:
-            from rjepa.jepa.maskers import create_masker, MaskCollator
-            masker = create_masker(self.masker_config)
-            self.masker = MaskCollator(masker, device=self.device)
-
         for batch in track(self.val_loader, description="Validation", total=len(self.val_loader)):
-            # OPTION 2: Apply masks on GPU (batch is list of tuples from simple_collate)
-            masked_batch = self.masker(batch)
-
-            # Extract tensors and move to GPU
-            latents = masked_batch["latents"].to(self.device)
-            context_mask = masked_batch["context_mask"].to(self.device)
-            target_mask = masked_batch["target_mask"].to(self.device)
-            domain_ids = masked_batch.get("domain_ids")
+            # Move batch to device
+            latents = batch["latents"].to(self.device)
+            context_mask = batch["context_mask"].to(self.device)
+            target_mask = batch["target_mask"].to(self.device)
+            domain_ids = batch.get("domain_ids")
             if domain_ids is not None:
                 domain_ids = domain_ids.to(self.device)
 

@@ -121,11 +121,7 @@ class ContiguousMasker:
         for b in range(batch_size):
             # Sample mask ratio for this sample
             mask_ratio = np.random.uniform(self.min_mask_ratio, self.max_mask_ratio)
-
-            # CRITICAL FIX: Ensure at least 1 step remains visible
-            # Max mask: num_steps - 1 (leave at least 1 visible)
-            max_mask_steps = max(1, num_steps - 1)
-            total_mask_steps = min(int(num_steps * mask_ratio), max_mask_steps)
+            total_mask_steps = int(num_steps * mask_ratio)
 
             if total_mask_steps == 0:
                 continue
@@ -144,11 +140,6 @@ class ContiguousMasker:
 
                 # Mask this block
                 context_mask[b, start_idx:end_idx] = False
-
-            # CRITICAL FIX: Verify at least 1 step is visible
-            # If all masked (edge case), unmask first step
-            if not context_mask[b].any():
-                context_mask[b, 0] = True
 
         target_mask = ~context_mask
 
@@ -268,78 +259,38 @@ class MaskCollator:
         """
         Collate batch and apply masking.
 
-        Handles variable-length sequences by padding to max length.
-
         Args:
             batch: List of (H, domain_id, ...) tuples from dataset
 
         Returns:
             Dict with keys:
-                - latents: [B, S_max, D] tensor (padded)
+                - latents: [B, S, D] tensor
                 - domain_ids: [B] tensor
-                - context_mask: [B, S_max] boolean
-                - target_mask: [B, S_max] boolean
-                - padding_mask: [B, S_max] boolean (True = real, False = padding)
+                - context_mask: [B, S] boolean
+                - target_mask: [B, S] boolean
         """
-        # Get sequence lengths
-        lengths = [item[0].shape[0] for item in batch]
-        max_len = max(lengths)
-        batch_size = len(batch)
-        hidden_dim = batch[0][0].shape[1]
-
-        # Pad sequences to max_len
-        latents_list = []
-        padding_mask_list = []
-
-        for item in batch:
-            seq = item[0]  # [S, D]
-            seq_len = seq.shape[0]
-
-            # Keep sequences on CPU initially
-            if seq_len < max_len:
-                # Pad with zeros
-                padding = torch.zeros(max_len - seq_len, hidden_dim, dtype=seq.dtype, device="cpu")
-                padded_seq = torch.cat([seq, padding], dim=0)  # [S_max, D]
-
-                # Create padding mask (True = real token, False = padding)
-                mask = torch.cat([
-                    torch.ones(seq_len, dtype=torch.bool, device="cpu"),
-                    torch.zeros(max_len - seq_len, dtype=torch.bool, device="cpu")
-                ])
-            else:
-                padded_seq = seq
-                mask = torch.ones(seq_len, dtype=torch.bool, device="cpu")
-
-            latents_list.append(padded_seq)
-            padding_mask_list.append(mask)
-
-        # Stack padded sequences
-        latents = torch.stack(latents_list, dim=0)  # [B, S_max, D]
-        padding_mask = torch.stack(padding_mask_list, dim=0)  # [B, S_max]
+        # Stack latents
+        latents = torch.stack([item[0] for item in batch])  # [B, S, D]
 
         # Stack domain IDs if present
         domain_ids = None
         if len(batch[0]) > 1:
-            domain_ids = torch.tensor([item[1] for item in batch], device="cpu")  # [B]
+            domain_ids = torch.tensor([item[1] for item in batch])  # [B]
 
-        # Generate masks on CPU
+        batch_size, num_steps, hidden_dim = latents.shape
+
+        # Generate masks
         context_mask, target_mask = self.masker(
             batch_size=batch_size,
-            num_steps=max_len,
-            device="cpu",
+            num_steps=num_steps,
+            device=self.device,
         )
-
-        # CRITICAL: Ensure we never mask on padding positions
-        # Set padding positions to False in both context and target masks
-        context_mask = context_mask & padding_mask  # Real positions only
-        target_mask = target_mask & padding_mask    # Real positions only
 
         return {
             "latents": latents,
             "domain_ids": domain_ids,
             "context_mask": context_mask,
             "target_mask": target_mask,
-            "padding_mask": padding_mask,
         }
 
 

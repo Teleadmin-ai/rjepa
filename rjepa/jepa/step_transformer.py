@@ -19,15 +19,13 @@ from rjepa.jepa.vjepa_adapted.utils import apply_masks
 
 
 def trunc_normal_(tensor, mean=0., std=1.):
-    """Truncated normal initialization (from V-JEPA)"""
-    with torch.no_grad():
-        size = tensor.shape
-        tmp = tensor.new_empty(size + (4,)).normal_()
-        valid = (tmp < 2) & (tmp > -2)
-        ind = valid.max(-1, keepdim=True)[1]
-        tensor.data.copy_(tmp.gather(-1, ind).squeeze(-1))
-        tensor.data.mul_(std).add_(mean)
-        return tensor
+    """
+    Truncated normal initialization.
+
+    CRITICAL FIX: Use PyTorch's built-in trunc_normal_ to avoid GIL issues.
+    The custom implementation had threading problems on Windows.
+    """
+    return torch.nn.init.trunc_normal_(tensor, mean=mean, std=std, a=-2.0, b=2.0)
 
 
 class StepTransformer(nn.Module):

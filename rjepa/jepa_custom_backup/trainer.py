@@ -17,7 +17,6 @@ from torch.cuda.amp import autocast, GradScaler
 from pathlib import Path
 from typing import Dict, Optional, Any
 from tqdm import tqdm
-import sys
 import time
 
 logger = logging.getLogger(__name__)
@@ -37,7 +36,6 @@ class RJEPATrainer:
         model: nn.Module,
         train_loader: DataLoader,
         val_loader: Optional[DataLoader] = None,
-        masker_config: Optional[Dict] = None,  # OPTION 2: Config for GPU-based masking
         optimizer: Optional[torch.optim.Optimizer] = None,
         lr: float = 3e-4,
         weight_decay: float = 0.05,
@@ -82,10 +80,6 @@ class RJEPATrainer:
         self.val_loader = val_loader
         self.device = device
 
-        # OPTION 2: Store masker config for GPU-based masking
-        self.masker_config = masker_config if masker_config is not None else {"type": "contiguous"}
-        self.masker = None  # Will be created in train_epoch() on GPU
-
         # Optimizer
         if optimizer is None:
             self.optimizer = torch.optim.AdamW(
@@ -116,7 +110,6 @@ class RJEPATrainer:
         self.grad_clip = grad_clip
         self.log_interval = log_interval
         self.val_interval = val_interval
-        self.accumulation_steps = 1  # Will be set from config if needed
 
         # EMA config
         self.ema_momentum_start = ema_momentum_start
@@ -198,81 +191,19 @@ class RJEPATrainer:
         }
         num_batches = 0
 
-        # OPTION 2: Create masker once (lazy init) for GPU-based masking
-        if self.masker is None:
-            from rjepa.jepa.maskers import create_masker, MaskCollator
-            masker = create_masker(self.masker_config)
-            self.masker = MaskCollator(masker, device=self.device)
-            logger.info(f"Created masker on {self.device}: {self.masker_config}")
+        pbar = tqdm(self.train_loader, desc=f"Epoch {self.current_epoch}")
 
-        # Use tqdm with file=sys.stderr and force flush for log compatibility
-        pbar = tqdm(
-            self.train_loader,
-            desc=f"Epoch {self.current_epoch}",
-            total=len(self.train_loader),
-            file=sys.stderr,
-            dynamic_ncols=True,
-            mininterval=1.0,  # Update every second
-        )
         for batch_idx, batch in enumerate(pbar):
-            # OPTION 2: DataLoader returns list of (H, domain_id) tuples
-            # batch = [(H1, domain_id1), (H2, domain_id2), ...]
-            # where each H has shape [num_steps, hidden_size]
-
-            # OPTION 2: Generate masks on GPU (dynamic masking for generalization)
-            # This is the CRITICAL part - masking happens HERE, not in DataLoader workers
-            # Overhead: ~0.5ms per batch (0.4% of 115ms forward pass)
-            # MaskCollator will:
-            # 1. Move tensors to GPU
-            # 2. Generate masks dynamically
-            # 3. Return dict with keys: latents, context_mask, target_mask
-            masked_batch = self.masker(batch)
-
-            # Extract masks from collated batch (all on CPU from MaskCollator)
-            context_mask_bool = masked_batch["context_mask"]
-            target_mask_bool = masked_batch["target_mask"]
-            latents = masked_batch["latents"]
-            domain_ids = masked_batch.get("domain_ids")
-
-            # Move tensors to GPU in main thread (workers can't create CUDA tensors on Windows)
-            latents = latents.to(self.device)
-            context_mask_bool = context_mask_bool.to(self.device)
-            target_mask_bool = target_mask_bool.to(self.device)
+            # Move batch to device
+            latents = batch["latents"].to(self.device)
+            context_mask = batch["context_mask"].to(self.device)
+            target_mask = batch["target_mask"].to(self.device)
+            domain_ids = batch.get("domain_ids")
             if domain_ids is not None:
                 domain_ids = domain_ids.to(self.device)
 
-            # Convert boolean masks to index masks for V-JEPA format
-            # V-JEPA expects: List of [B, K] tensors where K = number of positions to keep
-            B = latents.size(0)
-            context_mask = []
-            target_mask = []
-            for b in range(B):
-                ctx_idx = (context_mask_bool[b]).nonzero(as_tuple=False).squeeze(-1)  # [K_c]
-                tgt_idx = (target_mask_bool[b]).nonzero(as_tuple=False).squeeze(-1)  # [K_t]
-                context_mask.append(ctx_idx.unsqueeze(0))  # [1, K_c]
-                target_mask.append(tgt_idx.unsqueeze(0))  # [1, K_t]
-
-            # Stack into [B, K] tensors (pad if needed)
-            max_ctx = max(m.size(1) for m in context_mask)
-            max_tgt = max(m.size(1) for m in target_mask)
-
-            context_mask_tensor = torch.zeros(B, max_ctx, dtype=torch.long, device=self.device)
-            target_mask_tensor = torch.zeros(B, max_tgt, dtype=torch.long, device=self.device)
-
-            for b in range(B):
-                ctx_len = context_mask[b].size(1)
-                tgt_len = target_mask[b].size(1)
-                context_mask_tensor[b, :ctx_len] = context_mask[b]
-                target_mask_tensor[b, :tgt_len] = target_mask[b]
-
-            # Wrap in list for V-JEPA format (single mask per batch)
-            context_mask = [context_mask_tensor]
-            target_mask = [target_mask_tensor]
-
             # Forward pass with AMP
-            # Only zero grad at start of accumulation
-            if batch_idx % self.accumulation_steps == 0:
-                self.optimizer.zero_grad()
+            self.optimizer.zero_grad()
 
             if self.amp_enabled:
                 with autocast():
@@ -284,31 +215,20 @@ class RJEPATrainer:
                         compute_loss=True,
                     )
                     loss = outputs["loss"]
-                    # Scale loss by accumulation steps
-                    loss = loss / self.accumulation_steps
 
                 # Backward with gradient scaling
                 self.scaler.scale(loss).backward()
 
-                # Only step optimizer every accumulation_steps batches
-                if (batch_idx + 1) % self.accumulation_steps == 0:
-                    # Gradient clipping
-                    if self.grad_clip > 0:
-                        self.scaler.unscale_(self.optimizer)
-                        torch.nn.utils.clip_grad_norm_(
-                            self.model.parameters(), self.grad_clip
-                        )
+                # Gradient clipping
+                if self.grad_clip > 0:
+                    self.scaler.unscale_(self.optimizer)
+                    torch.nn.utils.clip_grad_norm_(
+                        self.model.parameters(), self.grad_clip
+                    )
 
-                    # Optimizer step
-                    self.scaler.step(self.optimizer)
-                    self.scaler.update()
-
-                    # LR scheduler step
-                    self.scheduler.step()
-
-                    # EMA update with annealed momentum
-                    self.model.ema_momentum = self._get_ema_momentum()
-                    self.model.update_target_encoder()
+                # Optimizer step
+                self.scaler.step(self.optimizer)
+                self.scaler.update()
             else:
                 outputs = self.model(
                     latents,
@@ -318,29 +238,25 @@ class RJEPATrainer:
                     compute_loss=True,
                 )
                 loss = outputs["loss"]
-                # Scale loss by accumulation steps
-                loss = loss / self.accumulation_steps
 
                 # Backward
                 loss.backward()
 
-                # Only step optimizer every accumulation_steps batches
-                if (batch_idx + 1) % self.accumulation_steps == 0:
-                    # Gradient clipping
-                    if self.grad_clip > 0:
-                        torch.nn.utils.clip_grad_norm_(
-                            self.model.parameters(), self.grad_clip
-                        )
+                # Gradient clipping
+                if self.grad_clip > 0:
+                    torch.nn.utils.clip_grad_norm_(
+                        self.model.parameters(), self.grad_clip
+                    )
 
-                    # Optimizer step
-                    self.optimizer.step()
+                # Optimizer step
+                self.optimizer.step()
 
-                    # LR scheduler step
-                    self.scheduler.step()
+            # LR scheduler step
+            self.scheduler.step()
 
-                    # EMA update with annealed momentum
-                    self.model.ema_momentum = self._get_ema_momentum()
-                    self.model.update_target_encoder()
+            # EMA update with annealed momentum
+            self.model.ema_momentum = self._get_ema_momentum()
+            self.model.update_target_encoder()
 
             # Accumulate losses
             epoch_losses["loss"] += loss.item()
@@ -348,8 +264,14 @@ class RJEPATrainer:
             epoch_losses["var_reg_loss"] += outputs["var_reg_loss"].item()
             num_batches += 1
 
-            # Update progress bar with current loss
-            pbar.set_postfix({"loss": f"{loss.item():.4f}", "lr": f"{self.optimizer.param_groups[0]['lr']:.2e}"})
+            # Update progress bar
+            pbar.set_postfix(
+                {
+                    "loss": loss.item(),
+                    "lr": self.optimizer.param_groups[0]["lr"],
+                    "ema": self.model.ema_momentum,
+                }
+            )
 
             # Log to W&B
             if self.use_wandb and self.global_step % self.log_interval == 0:
@@ -393,23 +315,12 @@ class RJEPATrainer:
         }
         num_batches = 0
 
-        from rich.progress import track
-
-        # OPTION 2: Create masker once for GPU-based masking (same as train_epoch)
-        if self.masker is None:
-            from rjepa.jepa.maskers import create_masker, MaskCollator
-            masker = create_masker(self.masker_config)
-            self.masker = MaskCollator(masker, device=self.device)
-
-        for batch in track(self.val_loader, description="Validation", total=len(self.val_loader)):
-            # OPTION 2: Apply masks on GPU (batch is list of tuples from simple_collate)
-            masked_batch = self.masker(batch)
-
-            # Extract tensors and move to GPU
-            latents = masked_batch["latents"].to(self.device)
-            context_mask = masked_batch["context_mask"].to(self.device)
-            target_mask = masked_batch["target_mask"].to(self.device)
-            domain_ids = masked_batch.get("domain_ids")
+        for batch in tqdm(self.val_loader, desc="Validation"):
+            # Move batch to device
+            latents = batch["latents"].to(self.device)
+            context_mask = batch["context_mask"].to(self.device)
+            target_mask = batch["target_mask"].to(self.device)
+            domain_ids = batch.get("domain_ids")
             if domain_ids is not None:
                 domain_ids = domain_ids.to(self.device)
 

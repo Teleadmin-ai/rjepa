@@ -18,7 +18,6 @@ import yaml
 from rjepa.jepa import (
     ReasoningJEPA,
     LatentDataset,
-    LatentDatasetMultiShard,  # Memory-efficient on-the-fly loading
     ContiguousMasker,
     create_rjepa_model,
 )
@@ -26,18 +25,6 @@ from rjepa.jepa.maskers import MaskCollator
 from rjepa.jepa.trainer import RJEPATrainer
 
 logger = logging.getLogger(__name__)
-
-
-# OPTION 2: Ultra-simple collate function (module level for Windows multiprocessing)
-def simple_collate(batch):
-    """
-    Ultra-simple collate: just return list of tuples.
-    No stacking (because H tensors have variable num_steps).
-    Masking will be done in trainer on GPU.
-
-    CRITICAL: Must be at module level (not nested) for Windows spawn serialization.
-    """
-    return batch  # batch is already List[Tuple[Tensor, int]]
 
 
 # CRITICAL FIX FOR WINDOWS MULTIPROCESSING:
@@ -102,31 +89,29 @@ def create_dataloaders(
     logger.info("Creating dataloaders...")
 
     # Create datasets (raw 4096d latents, projection done in model)
-    # CRITICAL: Use LatentDatasetMultiShard to load on-the-fly (memory efficient!)
-    # This avoids loading ALL 21k samples (7GB) in RAM at once
-    train_dataset = LatentDatasetMultiShard(train_latents_dir, device="cpu")
+    train_dataset = LatentDataset(train_latents_dir, device="cpu")
     logger.info(f"Train dataset: {len(train_dataset)} samples")
 
     val_dataset = None
     if val_latents_dir and val_latents_dir.exists():
-        val_dataset = LatentDatasetMultiShard(val_latents_dir, device="cpu")
+        val_dataset = LatentDataset(val_latents_dir, device="cpu")
         logger.info(f"Val dataset: {len(val_dataset)} samples")
 
-    # OPTION 2 IMPLEMENTATION: Simple collate_fn (no masking, no stacking)
-    # Masking will be done in training loop (on GPU) instead of DataLoader (CPU workers)
-    # This avoids Windows multiprocessing serialization issues completely
-    # collate_fn just returns list of (H, domain_id) tuples - NO stacking!
+    # CRITICAL: Use partial() to bind masker_config + device (serializable)
+    # instead of passing MaskCollator instance (NOT serializable on Windows)
+    collate_fn = partial(_collate_with_masking, masker_config=masker_config, device=device)
 
-    # Create dataloaders with simple collate_fn (just returns list, no stacking)
-    # Workers just load tensors from disk → NO complex serialization needed
+    # Create dataloaders
+    # IMPORTANT: persistent_workers=True fixes Windows multiprocessing blocking issue
+    # Workers stay alive between epochs instead of respawning → much faster!
     train_loader = DataLoader(
         train_dataset,
         batch_size=batch_size,
         shuffle=True,
         num_workers=num_workers,
-        collate_fn=simple_collate,  # CRITICAL: simple function, easily serialized
+        collate_fn=collate_fn,  # partial() with config (serializable!)
         pin_memory=(device == "cuda"),
-        persistent_workers=(num_workers > 0),  # Keep workers alive between epochs
+        persistent_workers=(num_workers > 0),  # Keep workers alive (Windows fix)
     )
 
     val_loader = None
@@ -136,17 +121,16 @@ def create_dataloaders(
             batch_size=batch_size,
             shuffle=False,
             num_workers=num_workers,
-            collate_fn=simple_collate,  # Same simple collate
+            collate_fn=collate_fn,  # Same partial() function
             pin_memory=(device == "cuda"),
-            persistent_workers=(num_workers > 0),
+            persistent_workers=(num_workers > 0),  # Keep workers alive (Windows fix)
         )
 
     logger.info(f"Train loader: {len(train_loader)} batches")
     if val_loader:
         logger.info(f"Val loader: {len(val_loader)} batches")
 
-    # Return masker_config so trainer can create masker for GPU-based masking
-    return train_loader, val_loader, masker_config
+    return train_loader, val_loader
 
 
 def train_rjepa_from_config(
@@ -186,8 +170,7 @@ def train_rjepa_from_config(
     # Create dataloaders
     # NOTE: Projection removed from dataset (now done in model's forward pass)
     #       This enables multiprocessing on Windows (num_workers > 0)
-    # OPTION 2: Masking done in trainer on GPU (not in collate_fn)
-    train_loader, val_loader, masker_config = create_dataloaders(
+    train_loader, val_loader = create_dataloaders(
         train_latents_dir=Path(config["data"]["train_latents_dir"]),
         val_latents_dir=Path(config["data"].get("val_latents_dir"))
         if "val_latents_dir" in config["data"]
@@ -222,7 +205,6 @@ def train_rjepa_from_config(
         model=model,
         train_loader=train_loader,
         val_loader=val_loader,
-        masker_config=masker_config,  # OPTION 2: Pass config for GPU-based masking
         lr=config["training"]["lr"],
         weight_decay=config["training"].get("weight_decay", 0.05),
         warmup_epochs=config["training"].get("warmup_epochs", 10),

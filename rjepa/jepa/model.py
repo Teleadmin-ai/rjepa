@@ -59,10 +59,14 @@ class ReasoningJEPA(nn.Module):
         self.loss_exp = loss_exp
         self.reg_coeff = reg_coeff
 
+        # NOTE: Projection is done INSIDE StepTransformer.input_proj
+        #       (NOT in Dataset, to enable multiprocessing on Windows)
+        #       StepTransformer creates: self.input_proj = nn.Linear(input_dim, embed_dim)
+
         self.context_encoder = StepTransformer(
-            input_dim=input_dim,
+            input_dim=input_dim,  # Raw latent dim (e.g., 4096)
             max_seq_len=max_seq_len,
-            embed_dim=encoder_embed_dim,
+            embed_dim=encoder_embed_dim,  # Target dim (e.g., 2048)
             depth=encoder_depth,
             num_heads=encoder_num_heads,
             mlp_ratio=mlp_ratio,
@@ -117,6 +121,9 @@ class ReasoningJEPA(nn.Module):
                 - var_reg_loss: scalar (if compute_loss=True)
         """
         B, S, D_in = x.shape
+
+        # NOTE: Projection is done inside context_encoder.input_proj
+        #       (NOT here, to avoid serialization issues with multiprocessing)
 
         # Encode context (trainable)
         z_context = self.context_encoder(x, masks=masks_context)
@@ -195,5 +202,33 @@ def reasoning_jepa_base(input_dim=4096, max_seq_len=512, **kwargs):
         predictor_num_heads=12,
         **kwargs
     )
+
+
+def create_rjepa_model(config):
+    """
+    Create R-JEPA model from config dict.
+
+    Maps config keys to ReasoningJEPA parameters:
+    - dim -> input_dim
+    - max_steps -> max_seq_len
+    - depth_encoder -> encoder_depth
+    - predictor_dim -> predictor_embed_dim
+    - depth_predictor -> predictor_depth
+    - num_heads -> encoder_num_heads & predictor_num_heads
+    """
+    return ReasoningJEPA(
+        input_dim=config.get('dim', 4096),
+        max_seq_len=config.get('max_steps', 512),
+        encoder_embed_dim=config.get('encoder_embed_dim', config.get('dim', 4096)),
+        encoder_depth=config.get('depth_encoder', 12),
+        encoder_num_heads=config.get('num_heads', 16),
+        predictor_embed_dim=config.get('predictor_dim', 2048),
+        predictor_depth=config.get('depth_predictor', 8),
+        predictor_num_heads=config.get('num_heads', 16),
+        mlp_ratio=config.get('mlp_ratio', 4.0),
+        drop_rate=config.get('dropout', 0.0),
+        ema_momentum=config.get('ema_momentum', 0.996),
+    )
+
 
 RJEPA_CONFIGS = {'base': reasoning_jepa_base}

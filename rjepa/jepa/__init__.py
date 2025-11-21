@@ -6,7 +6,7 @@ Adapted from V-JEPA (Meta AI) for 1D reasoning sequences.
 """
 
 # Core V-JEPA adapted modules
-from .model import ReasoningJEPA, reasoning_jepa_base, RJEPA_CONFIGS
+from .model import ReasoningJEPA, reasoning_jepa_base, create_rjepa_model, RJEPA_CONFIGS
 from .step_transformer import (
     StepTransformer,
     step_transformer_tiny,
@@ -18,14 +18,16 @@ from .step_transformer import (
 )
 from .step_predictor import StepPredictor, step_predictor
 from .multiblock1d import MaskCollator
+from .maskers import ContiguousMasker, RandomMasker, HierarchicalMasker
 from .modules import Block, Attention, MLP
 from .pos_embs import get_1d_sincos_pos_embed, get_1d_sincos_pos_embed_from_grid
 
 # Legacy modules (if they exist)
 try:
-    from .dataset import LatentDataset
+    from .dataset import LatentDataset, LatentDatasetMultiShard
 except ImportError:
     LatentDataset = None
+    LatentDatasetMultiShard = None
 
 try:
     from .trainer import RJEPATrainer
@@ -47,6 +49,7 @@ __all__ = [
     # Main model
     "ReasoningJEPA",
     "reasoning_jepa_base",
+    "create_rjepa_model",
     "RJEPA_CONFIGS",
     # Encoder variants
     "StepTransformer",
@@ -61,6 +64,9 @@ __all__ = [
     "step_predictor",
     # Masking
     "MaskCollator",
+    "ContiguousMasker",
+    "RandomMasker",
+    "HierarchicalMasker",
     # Core modules
     "Block",
     "Attention",
@@ -70,6 +76,7 @@ __all__ = [
     "get_1d_sincos_pos_embed_from_grid",
     # Legacy (if available)
     "LatentDataset",
+    "LatentDatasetMultiShard",
     "RJEPATrainer",
     "RJEPAClient",
     "create_app",

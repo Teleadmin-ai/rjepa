@@ -25,6 +25,8 @@ from transformers import AutoTokenizer, AutoModelForCausalLM
 from tqdm import tqdm
 import gzip
 import pickle
+import pandas as pd
+from safetensors.torch import save_file
 
 
 class OptimizedLatentExtractor:
@@ -300,13 +302,33 @@ class OptimizedLatentExtractor:
 
         return results
 
-    def save_batch(self, results: List[Dict[str, Any]], batch_id: int):
-        """Save batch results to compressed pickle file."""
-        output_file = self.output_dir / f"batch_{batch_id:04d}.pkl.gz"
+    def save_shard(self, shard_metadata: List[Dict], shard_latents: Dict[str, torch.Tensor], shard_idx: int):
+        """
+        Save shard to parquet + safetensors format (compatible with LatentDataset).
 
+        Args:
+            shard_metadata: List of metadata dicts (cot_id, problem_id, domain, etc.)
+            shard_latents: Dict mapping cot_id -> latent tensor [num_steps, hidden_size]
+            shard_idx: Shard index for naming
+        """
+        shard_name = f"shard-{shard_idx:04d}"
+
+        # Save metadata to parquet
+        metadata_path = self.output_dir / f"{shard_name}.parquet"
+        df = pd.DataFrame(shard_metadata)
+        df.to_parquet(metadata_path, compression='snappy', index=False)
+
+        # Save latents to safetensors
+        latents_path = self.output_dir / f"{shard_name}.safetensors"
+        save_file(shard_latents, latents_path)
+
+        print(f"  [SHARD] Saved {shard_name}: {len(shard_metadata)} samples")
+
+    def save_batch_legacy(self, results: List[Dict[str, Any]], batch_id: int):
+        """[DEPRECATED] Old batch format - kept for compatibility."""
+        output_file = self.output_dir / f"batch_{batch_id:04d}.pkl.gz"
         with gzip.open(output_file, "wb") as f:
             pickle.dump(results, f)
-
         successful = sum(1 for r in results if r["status"] == "success")
         print(f"[SAVE] Saved batch {batch_id}: {successful}/{len(results)} successful -> {output_file}")
 
@@ -316,10 +338,11 @@ class OptimizedLatentExtractor:
         batch_size: int = 8,
         resume: bool = False,
         checkpoint_every: int = 10,
+        shard_size: int = 1000,
     ):
         """Main extraction pipeline."""
         print("=" * 80)
-        print("PHASE 21: OPTIMIZED LATENT EXTRACTION")
+        print("PHASE 21: OPTIMIZED LATENT EXTRACTION (SHARD FORMAT)")
         print("=" * 80)
         print()
 
@@ -346,13 +369,17 @@ class OptimizedLatentExtractor:
             print("[DONE] All problems already processed!")
             return
 
-        print(f"[CONFIG] Batch size: {batch_size}")
+        print(f"[CONFIG] Batch size: {batch_size} (GPU inference)")
+        print(f"[CONFIG] Shard size: {shard_size} (output format)")
         print(f"[CONFIG] Problems to process: {len(to_process)}")
-        print(f"[CONFIG] Estimated batches: {len(to_process) // batch_size + 1}")
+        print(f"[CONFIG] Estimated shards: {len(to_process) // shard_size + 1}")
         print()
 
-        # Process in batches
+        # Process in batches, accumulate into shards
         batch_id = 0
+        shard_idx = 0
+        shard_metadata = []
+        shard_latents = {}
         start_time = time.time()
 
         pbar = tqdm(total=len(to_process), desc="Extracting latents", unit="problem")
@@ -364,16 +391,48 @@ class OptimizedLatentExtractor:
             results = self.generate_and_extract_batch(batch)
             batch_time = time.time() - batch_start
 
-            # Update stats
+            # Add successful results to current shard accumulators
             for result in results:
                 if result["status"] == "success":
                     self.stats["successful"] += 1
                     processed.add(result["problem_id"])
+
+                    # Generate cot_id (same as problem_id for now)
+                    problem_id = result["problem_id"]
+                    cot_id = problem_id
+
+                    # Decompress latents from compressed format
+                    latents_decompressed = gzip.decompress(result["latents_compressed"])
+                    latents_array = np.frombuffer(latents_decompressed, dtype=np.float16)
+
+                    # Calculate actual shape
+                    hidden_size = result["hidden_size"]
+                    num_elements = len(latents_array)
+                    actual_num_steps = num_elements // hidden_size
+
+                    # Convert to float32 tensor for training
+                    latents_tensor = torch.from_numpy(latents_array.copy()).reshape(actual_num_steps, hidden_size).to(torch.float32)
+
+                    # Add to shard
+                    shard_metadata.append({
+                        "cot_id": cot_id,
+                        "problem_id": problem_id,
+                        "domain": result["domain"],
+                        "subdomain": result["subdomain"],
+                        "num_steps": actual_num_steps,
+                        "hidden_size": hidden_size,
+                    })
+                    shard_latents[cot_id] = latents_tensor
+
                 else:
                     self.stats["failed"] += 1
 
-            # Save batch
-            self.save_batch(results, batch_id)
+            # Save shard if we've accumulated enough samples
+            if len(shard_metadata) >= shard_size:
+                self.save_shard(shard_metadata, shard_latents, shard_idx)
+                shard_metadata = []
+                shard_latents = {}
+                shard_idx += 1
 
             # Checkpoint
             if batch_id % checkpoint_every == 0:
@@ -391,14 +450,19 @@ class OptimizedLatentExtractor:
             pbar.set_postfix({
                 "success": self.stats["successful"],
                 "failed": self.stats["failed"],
+                "shards": shard_idx,
                 "time/prob": f"{avg_time_per_problem:.1f}s",
-                "time/batch": f"{batch_time:.1f}s",
                 "ETA": f"{eta_sec/3600:.1f}h",
             })
 
             batch_id += 1
 
         pbar.close()
+
+        # Save final shard if there are remaining samples
+        if shard_metadata:
+            self.save_shard(shard_metadata, shard_latents, shard_idx)
+            shard_idx += 1
 
         # Final checkpoint
         self.save_checkpoint(processed)

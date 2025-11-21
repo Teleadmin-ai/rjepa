@@ -2,17 +2,18 @@
 # R-JEPA Training Configuration
 # -------------------------------------------------------------------------------
 
-# Model architecture
+# Model architecture (ORIGINAL SIZE - testing if OOM still occurs)
 model:
-  dim: 4096  # Hidden dimension (Qwen3-8B uses 4096)
-  depth_encoder: 12  # Encoder depth
-  depth_predictor: 8  # Predictor depth
-  num_heads: 16  # Number of attention heads
-  predictor_dim: 2048  # Predictor internal dimension
-  mlp_ratio: 4.0  # MLP expansion ratio
+  dim: 4096  # INPUT dimension (raw latent size from Qwen3-8B layer -2)
+  encoder_embed_dim: 2048  # ENCODER dimension (ORIGINAL)
+  depth_encoder: 6  # Encoder depth (ORIGINAL)
+  depth_predictor: 4  # Predictor depth (ORIGINAL)
+  num_heads: 8  # Number of attention heads (ORIGINAL)
+  predictor_dim: 1024  # Predictor internal dimension (ORIGINAL)
+  mlp_ratio: 4.0  # MLP expansion ratio (ORIGINAL)
   dropout: 0.0  # Dropout (0.0 for deterministic training)
   max_steps: 512  # Maximum sequence length
-  domain_embed_dim: 64  # Domain embedding dimension
+  domain_embed_dim: 64  # Domain embedding dimension (ORIGINAL)
   num_domains: 50  # Number of domain classes
   ema_momentum: 0.996  # Initial EMA momentum (will be annealed)
 
@@ -34,12 +35,13 @@ masker:
 
 # Data paths
 data:
-  train_latents_dir: "data/latents/qwen3-8b/train"
-  val_latents_dir: "data/latents/qwen3-8b/val"
+  train_latents_dir: "data/latents/qwen3-8b/academic_shards"
+  val_latents_dir: "data/latents/qwen3-8b/academic_shards"
 
 # Training configuration
 training:
-  batch_size: 32  # Batch size (adjust for GPU memory)
+  batch_size: 1  # Batch size (CRITICAL: Reduced to 1 to avoid OOM with shard caching!)
+  accumulation_steps: 8  # Gradient accumulation (effective batch_size = 1*8 = 8)
   max_epochs: 100  # Total epochs
   lr: 3.0e-4  # Learning rate
   weight_decay: 0.05  # Weight decay
@@ -48,7 +50,8 @@ training:
   amp_enabled: true  # Automatic Mixed Precision
   ema_momentum_start: 0.996  # Initial EMA momentum
   ema_momentum_end: 0.9999  # Final EMA momentum (annealed)
-  num_workers: 4  # DataLoader workers
+  num_workers: 0  # WINDOWS LIMITATION: num_workers>0 causes GIL crashes with CUDA
+                  # Must use 0 on Windows. On Linux, can use 4+ workers safely.
   log_interval: 10  # Log every N steps
   val_interval: 1  # Validate every N epochs
 
