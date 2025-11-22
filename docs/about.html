@@ -126,12 +126,58 @@
         footer p { color: var(--text-muted); font-size: 0.9rem; }
         footer a { color: var(--accent); text-decoration: none; }
 
+        .diagram-container {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 30px;
+            margin: 30px 0;
+            overflow-x: auto;
+        }
+        .diagram-container .mermaid {
+            display: flex;
+            justify-content: center;
+        }
+        .diagram-caption {
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            font-style: italic;
+            margin-top: 20px;
+        }
+
         @media (max-width: 768px) {
             .hero h1 { font-size: 2rem; }
             .nav-links { display: none; }
             .feature-section { padding: 25px; }
+            .diagram-container { padding: 15px; }
         }
     </style>
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'dark',
+            themeVariables: {
+                primaryColor: '#6366f1',
+                primaryTextColor: '#e2e8f0',
+                primaryBorderColor: '#6366f1',
+                lineColor: '#94a3b8',
+                secondaryColor: '#1e293b',
+                tertiaryColor: '#0f172a',
+                background: '#1e293b',
+                mainBkg: '#1e293b',
+                nodeBorder: '#6366f1',
+                clusterBkg: '#1e293b',
+                clusterBorder: '#6366f1',
+                titleColor: '#e2e8f0',
+                edgeLabelBackground: '#1e293b'
+            },
+            flowchart: {
+                curve: 'basis',
+                padding: 20
+            }
+        });
+    </script>
 </head>
 <body>
     <header>
@@ -178,6 +224,67 @@
             </div>
 
             <p>The key insight, borrowed from Yann LeCun's work on world models, is that we don't need to predict the actual words. We just need to predict what the <strong>internal state should be</strong> if the reasoning is proceeding correctly. When the actual state diverges from the expected state, something has gone wrong.</p>
+
+            <h2>How It Works — The Pipeline</h2>
+
+            <div class="diagram-container">
+                <pre class="mermaid">
+flowchart LR
+    subgraph INPUT["📥 Input"]
+        P[Problem]
+    end
+
+    subgraph LLM["🤖 Language Model"]
+        G[Generate<br/>Reasoning]
+        S1[Step 1]
+        S2[Step 2]
+        S3[Step 3]
+        SN[Step N]
+    end
+
+    subgraph LATENT["🧠 Latent Space"]
+        H1[h₁]
+        H2[h₂]
+        H3[h₃]
+        HN[hₙ]
+    end
+
+    subgraph RJEPA["⚡ R-JEPA World Model"]
+        ENC[Context<br/>Encoder]
+        PRED[Predictor]
+        TARGET[Target<br/>Encoder<br/>EMA]
+    end
+
+    subgraph OUTPUT["📤 Output"]
+        SCORE[Coherence<br/>Score]
+        CORRECT[Corrected<br/>Reasoning]
+    end
+
+    P --> G
+    G --> S1 & S2 & S3 & SN
+    S1 --> H1
+    S2 --> H2
+    S3 --> H3
+    SN --> HN
+
+    H1 & H2 --> ENC
+    ENC --> PRED
+    PRED -.->|"predict h₃"| H3
+    H3 --> TARGET
+    TARGET -.->|"compare"| PRED
+
+    PRED --> SCORE
+    PRED --> CORRECT
+
+    style INPUT fill:#1e293b,stroke:#6366f1,color:#e2e8f0
+    style LLM fill:#1e293b,stroke:#0ea5e9,color:#e2e8f0
+    style LATENT fill:#1e293b,stroke:#22d3ee,color:#e2e8f0
+    style RJEPA fill:#1e293b,stroke:#6366f1,color:#e2e8f0
+    style OUTPUT fill:#1e293b,stroke:#22d3ee,color:#e2e8f0
+                </pre>
+            </div>
+
+            <p class="diagram-caption">The R-JEPA pipeline: A problem goes through the LLM to generate reasoning steps. Each step produces a latent vector (h). R-JEPA learns to predict what the next latent should look like based on previous ones, detecting when reasoning goes off track.</p>
 
             <h2 id="modes">Three Ways R-JEPA Helps</h2>
 
