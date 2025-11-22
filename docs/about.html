@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Understanding R-JEPA: A World Model for Text Reasoning - How it works, why it matters, and what problems it solves.">
+    <title>About R-JEPA | Understanding World Models for Reasoning</title>
+    <link rel="canonical" href="https://cognition4ai.com/about.html">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧠</text></svg>">
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --secondary: #0ea5e9;
+            --bg-dark: #0f172a;
+            --bg-card: #1e293b;
+            --text: #e2e8f0;
+            --text-muted: #94a3b8;
+            --accent: #22d3ee;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-dark);
+            color: var(--text);
+            line-height: 1.8;
+        }
+        .container { max-width: 800px; margin: 0 auto; padding: 0 20px; }
+
+        header {
+            padding: 20px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            position: sticky;
+            top: 0;
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(10px);
+            z-index: 100;
+        }
+        nav { display: flex; justify-content: space-between; align-items: center; max-width: 1200px; margin: 0 auto; padding: 0 20px; }
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .nav-links { display: flex; gap: 30px; list-style: none; }
+        .nav-links a { color: var(--text-muted); text-decoration: none; font-weight: 500; }
+        .nav-links a:hover { color: var(--accent); }
+
+        .hero {
+            padding: 80px 0 60px;
+            text-align: center;
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(14, 165, 233, 0.05) 100%);
+        }
+        .hero h1 {
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .hero p { color: var(--text-muted); font-size: 1.2rem; }
+
+        .content { padding: 60px 0; }
+        .content h2 {
+            font-size: 1.8rem;
+            margin: 50px 0 25px;
+            color: var(--accent);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            padding-bottom: 10px;
+        }
+        .content h2:first-child { margin-top: 0; }
+        .content p { margin-bottom: 20px; color: var(--text); }
+        .content strong { color: var(--accent); }
+
+        .analogy-box {
+            background: var(--bg-card);
+            border-left: 4px solid var(--primary);
+            padding: 25px 30px;
+            margin: 30px 0;
+            border-radius: 0 12px 12px 0;
+        }
+        .analogy-box h3 {
+            color: var(--primary);
+            margin-bottom: 15px;
+            font-size: 1.2rem;
+        }
+
+        .feature-section {
+            background: var(--bg-card);
+            padding: 40px;
+            border-radius: 16px;
+            margin: 40px 0;
+        }
+        .feature-section h3 {
+            color: var(--text);
+            font-size: 1.4rem;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .feature-section p { color: var(--text-muted); }
+
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--primary);
+            text-decoration: none;
+            margin-top: 40px;
+            font-weight: 500;
+        }
+        .back-link:hover { color: var(--accent); }
+
+        footer {
+            padding: 40px 0;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            text-align: center;
+        }
+        footer p { color: var(--text-muted); font-size: 0.9rem; }
+        footer a { color: var(--accent); text-decoration: none; }
+
+        @media (max-width: 768px) {
+            .hero h1 { font-size: 2rem; }
+            .nav-links { display: none; }
+            .feature-section { padding: 25px; }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <nav>
+            <a href="/" class="logo"><span>🧠</span> R-JEPA</a>
+            <ul class="nav-links">
+                <li><a href="/">Home</a></li>
+                <li><a href="#problem">The Problem</a></li>
+                <li><a href="#approach">Our Approach</a></li>
+                <li><a href="#modes">How It Helps</a></li>
+                <li><a href="https://github.com/Teleadmin-ai/rjepa">GitHub</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <section class="hero">
+        <div class="container">
+            <h1>Understanding R-JEPA</h1>
+            <p>What it does, why it matters, and how it works — in plain language</p>
+        </div>
+    </section>
+
+    <section class="content">
+        <div class="container">
+
+            <h2 id="problem">The Problem We're Solving</h2>
+
+            <p>Large language models are remarkably capable, but they have a curious weakness: they don't really <em>think</em> about what they're saying. When a model solves a math problem or writes code, it's essentially predicting the next word based on patterns it learned during training. There's no internal voice checking if the reasoning makes sense.</p>
+
+            <p>This leads to a familiar frustration. The model confidently writes "Step 1... Step 2... Step 3..." — and the final answer is wrong. Not because the model lacks knowledge, but because somewhere in the middle, a reasoning step went off track, and nothing caught it.</p>
+
+            <p>What if we could give the model a way to <strong>sense when its reasoning drifts</strong>? Not by adding more rules, but by teaching it what good reasoning <em>feels like</em> at a deeper level?</p>
+
+            <h2 id="approach">Our Approach: Learning the Shape of Good Reasoning</h2>
+
+            <p>R-JEPA takes a different approach from traditional methods. Instead of looking at the words a model produces, we look at its <strong>internal representations</strong> — the hidden patterns of activation inside the neural network as it thinks through each step.</p>
+
+            <p>These internal states, which we call "latents," are like a fingerprint of what the model is actually computing at each moment. A correct reasoning step has a certain shape in this latent space. An incorrect one looks different.</p>
+
+            <div class="analogy-box">
+                <h3>An Analogy</h3>
+                <p>Imagine watching someone solve a puzzle. You can't see their thoughts, but you notice their hand movements. Someone who knows what they're doing moves with a certain rhythm — confident, directed, purposeful. Someone who's confused hesitates, backtracks, fumbles.</p>
+                <p>R-JEPA learns to recognize this rhythm, but in the space of neural activations. It learns what the "confident, directed, purposeful" pattern looks like for correct mathematical reasoning, logical deduction, or code writing.</p>
+            </div>
+
+            <p>The key insight, borrowed from Yann LeCun's work on world models, is that we don't need to predict the actual words. We just need to predict what the <strong>internal state should be</strong> if the reasoning is proceeding correctly. When the actual state diverges from the expected state, something has gone wrong.</p>
+
+            <h2 id="modes">Three Ways R-JEPA Helps</h2>
+
+            <div class="feature-section">
+                <h3>🎯 RERANK — Picking the Best Answer</h3>
+                <p>The simplest use case. We ask the language model to generate several different solutions to the same problem. Then R-JEPA scores each one based on how "coherent" the reasoning looks in latent space.</p>
+                <p>A solution where each step flows naturally from the previous one will score better than a solution with logical jumps or inconsistencies — even if both arrive at an answer. This doesn't guarantee correctness, but it significantly improves the odds of picking a good solution.</p>
+            </div>
+
+            <div class="feature-section">
+                <h3>🔄 NUDGE — Gentle Course Correction</h3>
+                <p>This is more subtle. Instead of just scoring complete solutions, R-JEPA can influence the model <em>while it's generating</em>. At each step, it predicts what a good next state should look like, then gently biases the model's word choices toward that target.</p>
+                <p>Think of it like a GPS that doesn't just tell you when you've arrived at the wrong destination — it notices when you're about to take a wrong turn and suggests a correction before you commit to it.</p>
+                <p>The bias is gentle (adjustable from subtle to strong), so the model can still follow its intuition while being guided toward more coherent reasoning paths.</p>
+            </div>
+
+            <div class="feature-section">
+                <h3>📝 PLAN — Filling in the Gaps</h3>
+                <p>Sometimes a model skips steps. It might jump from "we need to solve for x" to "therefore x = 4" without showing the work. R-JEPA can detect these gaps by noticing that the latent space jumped unexpectedly.</p>
+                <p>More importantly, it can predict what the missing steps <em>should</em> look like, and translate those predictions back into text. This helps produce more complete, verifiable reasoning chains.</p>
+            </div>
+
+            <h2>Working with Different Models</h2>
+
+            <p>One practical concern: does this only work with one specific language model? Not quite. The latent space of different models in the same family (like Qwen 8B and Qwen 32B) have similar structures. We can train R-JEPA on a smaller model and then adapt it to work with larger ones through a brief calibration process.</p>
+
+            <p>This means you can develop and test on accessible hardware, then deploy with more powerful models when needed, without starting from scratch.</p>
+
+            <h2>What This Isn't</h2>
+
+            <p>R-JEPA is not a magic solution. It can't make a model understand concepts it never learned. It can't guarantee correct answers. It's not a replacement for careful prompt engineering or domain-specific fine-tuning.</p>
+
+            <p>What it offers is a <strong>new lens</strong> on the reasoning process — a way to evaluate and guide model outputs that goes beyond just looking at the words. Think of it as adding a layer of introspection to systems that otherwise operate on pure pattern matching.</p>
+
+            <h2>The Bigger Picture</h2>
+
+            <p>This project is an experiment in a specific vision of AI development: that systems should have some model of what they're doing, not just predict outputs. The V-JEPA approach from Meta AI showed this was possible for video (predicting what should happen next in a scene). R-JEPA explores whether the same principle applies to reasoning in text.</p>
+
+            <p>We don't claim to have solved the problem of machine reasoning. But we hope this contributes to the broader effort of building AI systems that are more reliable, more interpretable, and more aligned with how we'd want a thoughtful agent to behave.</p>
+
+            <a href="/" class="back-link">
+                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+                Back to Home
+            </a>
+        </div>
+    </section>
+
+    <footer>
+        <p>&copy; 2025 <a href="https://github.com/Teleadmin-ai">Teleadmin</a>. Created by Romain Provencal.</p>
+    </footer>
+</body>
+</html>
