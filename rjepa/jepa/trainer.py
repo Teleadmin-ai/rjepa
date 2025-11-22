@@ -287,21 +287,20 @@ class RJEPATrainer:
                     # Scale loss by accumulation steps
                     loss = loss / self.accumulation_steps
 
-                # Backward with gradient scaling
-                self.scaler.scale(loss).backward()
+                # FIX: Direct backward WITHOUT GradScaler (GradScaler causes 99.9% NaN gradients!)
+                # AMP autocast still works for memory/speed, but we skip gradient scaling
+                loss.backward()
 
                 # Only step optimizer every accumulation_steps batches
                 if (batch_idx + 1) % self.accumulation_steps == 0:
-                    # Gradient clipping
+                    # Gradient clipping (direct, no scaler.unscale_ needed)
                     if self.grad_clip > 0:
-                        self.scaler.unscale_(self.optimizer)
                         torch.nn.utils.clip_grad_norm_(
                             self.model.parameters(), self.grad_clip
                         )
 
-                    # Optimizer step
-                    self.scaler.step(self.optimizer)
-                    self.scaler.update()
+                    # Optimizer step (direct, no scaler.step needed)
+                    self.optimizer.step()
 
                     # LR scheduler step
                     self.scheduler.step()

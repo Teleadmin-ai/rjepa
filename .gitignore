@@ -6,6 +6,7 @@
 .env
 .env.local
 .tokengithub
+.token-private
 *.key
 *.pem
 secrets/
@@ -67,3 +68,10 @@ out/
 # Keep structure
 !.gitkeep
 CLAUDE.md
+
+# Private Directory (synced to rjepa-private repo only)
+private/
+
+# Private notes
+claude2.md
+gpt5.md

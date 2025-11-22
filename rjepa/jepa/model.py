@@ -162,8 +162,13 @@ class ReasoningJEPA(nn.Module):
 
             # 2. Variance regularization: encourage predictions to have variance ~1
             #    Compute std dev across batch/sequence dimensions
-            pstd_z = torch.sqrt(z_pred.var(dim=(0, 1)) + 0.0001)  # [D]
-            loss_reg = torch.mean(torch.nn.functional.relu(1.0 - pstd_z))
+            #    FIX: Skip variance reg if not enough elements (avoids nan with small batches)
+            num_elements = z_pred.shape[0] * z_pred.shape[1]
+            if num_elements > 1:
+                pstd_z = torch.sqrt(z_pred.var(dim=(0, 1)) + 0.0001)  # [D]
+                loss_reg = torch.mean(torch.nn.functional.relu(1.0 - pstd_z))
+            else:
+                loss_reg = torch.tensor(0.0, device=z_pred.device, dtype=z_pred.dtype)
 
             # 3. Total loss
             total_loss = loss_jepa + self.reg_coeff * loss_reg
