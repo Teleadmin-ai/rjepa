@@ -766,6 +766,7 @@
                     <li><a href="#features">Features</a></li>
                     <li><a href="#architecture">Architecture</a></li>
                     <li><a href="#modes">Inference</a></li>
+                    <li><a href="#technical">Technical</a></li>
                     <li><a href="#research">Research</a></li>
                     <li><a href="https://github.com/Teleadmin-ai/rjepa">GitHub</a></li>
                 </ul>
@@ -776,12 +777,12 @@
     <section class="hero">
         <div class="container">
             <div class="hero-content">
-                <span class="hero-badge">Inspired by V-JEPA & Yann LeCun's Vision</span>
+                <span class="hero-badge">Based on V-JEPA & Yann LeCun's Work (2022-2024)</span>
                 <h1>R-JEPA</h1>
                 <p class="tagline">Reasoning Joint Embedding Predictive Architecture</p>
                 <p class="subtitle">
-                    A <strong>World Model for Text Reasoning</strong> that predicts <em>concepts</em>, not tokens.
-                    Like a blind person reading braille, R-JEPA learns pure conceptual understanding in latent space.
+                    An <strong>experimental World Model for Text Reasoning</strong> that operates on latent representations instead of tokens.
+                    Adapts Meta AI's V-JEPA (video prediction) approach to textual reasoning sequences.
                 </p>
                 <div class="cta-buttons">
                     <a href="https://github.com/Teleadmin-ai/rjepa" class="btn btn-primary">
@@ -830,32 +831,32 @@
                 <div class="feature-card">
                     <div class="feature-icon">🎯</div>
                     <h3>Latent Space Prediction</h3>
-                    <p>Operates on LLM hidden states, not tokens. Learns stable relationships between reasoning concepts - pure conceptual understanding without surface-level noise.</p>
+                    <p>Operates on LLM hidden states (4096-dim vectors from layer -2), not tokens. Uses contiguous masking (30-70% of steps) to predict reasoning step representations.</p>
                 </div>
                 <div class="feature-card">
                     <div class="feature-icon">🔄</div>
-                    <h3>Multi-LLM Support</h3>
-                    <p>Works with Qwen3, Llama3, Mistral, DeepSeek, Phi families. Fast calibration adapts to new LLMs in 2-4 hours instead of days of full retraining.</p>
+                    <h3>Multi-LLM Compatibility</h3>
+                    <p>Tested with Qwen3, Llama3, Mistral, DeepSeek, Phi families. Includes projection adapters (W_in/W_out) for calibrating to new LLMs without full retraining.</p>
                 </div>
                 <div class="feature-card">
                     <div class="feature-icon">✅</div>
                     <h3>Validated Training Data</h3>
-                    <p>Trains only on verified correct reasoning chains. Mathematical validation (sympy), code execution tests, and teacher model verification ensure truth, not plausibility.</p>
+                    <p>Trains on chains verified by automatic validators: sympy for math, sandboxed execution for code. Uses is_valid=True filtering - only correct reasoning paths.</p>
                 </div>
                 <div class="feature-card">
                     <div class="feature-icon">📈</div>
-                    <h3>Continuous Learning</h3>
-                    <p>User feedback loop enables nightly retraining. The system improves with usage, like a living organism that learns from interactions.</p>
+                    <h3>Feedback Pipeline</h3>
+                    <p>Includes continuous learning module: user interaction logging with PII filtering, feedback validation, and scheduled retraining support via Prefect flows.</p>
                 </div>
                 <div class="feature-card">
                     <div class="feature-icon">📊</div>
-                    <h3>Extended Benchmarks</h3>
-                    <p>Evaluated on GSM8K, MATH, HumanEval, MMLU (57 subjects), Big-Bench Hard (23 tasks), ARC, and HellaSwag.</p>
+                    <h3>Benchmark Support</h3>
+                    <p>Includes loaders for GSM8K, MATH, HumanEval, MMLU (57 subjects), Big-Bench Hard (23 tasks), ARC, and HellaSwag. Correlation analysis between JEPA-loss and correctness.</p>
                 </div>
                 <div class="feature-card">
                     <div class="feature-icon">🐳</div>
-                    <h3>Docker Ready</h3>
-                    <p>7 orchestrated services with Docker Compose. Production-ready deployment with health checks, logging, and monitoring.</p>
+                    <h3>Containerized Deployment</h3>
+                    <p>7 Docker services via docker-compose: student-llm, rjepa-service, teacher-orch, data-pipeline, prefect-server, ui-backend, ui-frontend.</p>
                 </div>
             </div>
         </div>
@@ -905,15 +906,23 @@
             <div class="stats-grid">
                 <div class="stat-item">
                     <div class="stat-value">678M</div>
-                    <div class="stat-label">Parameters</div>
+                    <div class="stat-label">Parameters (2048d encoder)</div>
                 </div>
                 <div class="stat-item">
-                    <div class="stat-value">21K+</div>
+                    <div class="stat-value">21K</div>
                     <div class="stat-label">Training Problems</div>
                 </div>
                 <div class="stat-item">
-                    <div class="stat-value">18+</div>
-                    <div class="stat-label">LLMs Supported</div>
+                    <div class="stat-value">17K</div>
+                    <div class="stat-label">Lines of Code</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">117</div>
+                    <div class="stat-label">Source Files</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">57</div>
+                    <div class="stat-label">Unit Tests</div>
                 </div>
                 <div class="stat-item">
                     <div class="stat-value">7</div>
@@ -928,19 +937,60 @@
             <h2>Inference Modes</h2>
             <div class="modes-grid">
                 <div class="mode-card">
-                    <span class="status status-production">Production</span>
+                    <span class="status status-production">Tested</span>
                     <h3>RERANK</h3>
-                    <p>Generate K reasoning chain candidates, score each with JEPA-loss, select the most coherent. Combines logprob with coherence scoring for optimal reasoning chain selection.</p>
+                    <p>Generate K=4 reasoning chain candidates, compute JEPA-loss for each, select the lowest-loss candidate. Optionally combines with logprob scoring: score = α×logprob + β×(-JEPA_loss).</p>
                 </div>
                 <div class="mode-card">
                     <span class="status status-implemented">Implemented</span>
-                    <h3>NUDGE</h3>
-                    <p>Guide generation with predicted latents using Logit Guidance. Token-by-token steering toward coherent reasoning paths with formula: logits = llm_logits + alpha * guidance_bias.</p>
+                    <h3>NUDGE (Logit Guidance)</h3>
+                    <p>Token-by-token guidance using predicted latents. Projects predicted h_next to vocabulary space via learned MLP. Formula: logits_final = logits_llm + α×guidance_bias. Requires calibration step.</p>
                 </div>
                 <div class="mode-card">
                     <span class="status status-implemented">Implemented</span>
                     <h3>PLAN</h3>
-                    <p>Complete missing reasoning steps. Predict latents for gaps in the reasoning chain and decode them to text. Like a GPS recalculating your route.</p>
+                    <p>Predict latents for missing reasoning steps based on context. Decodes predicted vectors to text via separate decoder module or LLM prompting. Useful for gap completion.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="technical" id="technical">
+        <div class="container">
+            <h2>Technical Details</h2>
+            <p class="section-subtitle">Architecture specifications and training configuration</p>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">🏗️</div>
+                    <h3>Model Architecture</h3>
+                    <p><strong>Context Encoder:</strong> 6-layer Transformer, 2048-dim, 16 heads<br>
+                    <strong>Predictor:</strong> 4-layer Transformer<br>
+                    <strong>Target Encoder:</strong> EMA copy (momentum 0.996→0.9999)<br>
+                    <strong>Input:</strong> 4096-dim latents from LLM layer -2</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📉</div>
+                    <h3>Loss Functions</h3>
+                    <p><strong>Primary:</strong> L1 reconstruction on masked steps<br>
+                    <strong>Regularization:</strong> Variance loss (prevents collapse)<br>
+                    <strong>Optional:</strong> InfoNCE contrastive (weight 0.1)<br>
+                    <strong>Temperature:</strong> 0.07 for contrastive</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">💾</div>
+                    <h3>Data Storage</h3>
+                    <p><strong>Metadata:</strong> Parquet (zstd compression)<br>
+                    <strong>Tensors:</strong> SafeTensors format<br>
+                    <strong>Indexing:</strong> DuckDB for SQL queries<br>
+                    <strong>Training data:</strong> GSM8K, MATH, HumanEval</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">⚙️</div>
+                    <h3>Training Config</h3>
+                    <p><strong>Optimizer:</strong> AdamW, lr=3e-4<br>
+                    <strong>Precision:</strong> bfloat16 AMP<br>
+                    <strong>Gradient clip:</strong> 1.0<br>
+                    <strong>Masking:</strong> Contiguous 30-70% of steps</p>
                 </div>
             </div>
         </div>
@@ -949,7 +999,7 @@
     <section class="research" id="research">
         <div class="container">
             <h2>Research Foundation</h2>
-            <p class="section-subtitle">R-JEPA builds on foundational work in self-supervised learning and world models</p>
+            <p class="section-subtitle">Based on published work in self-supervised learning</p>
             <div class="papers-grid">
                 <div class="paper-card">
                     <h3>V-JEPA: Latent Video Prediction for Visual Representation Learning</h3>
@@ -972,7 +1022,7 @@
             <div class="footer-content">
                 <div class="footer-brand">
                     <h3>🧠 R-JEPA</h3>
-                    <p>A World Model for Text Reasoning. Predict concepts, not tokens. Built by Teleadmin for advancing AI reasoning capabilities through self-supervised learning in latent space.</p>
+                    <p>An experimental implementation adapting Meta AI's V-JEPA approach to textual reasoning. Open-source project exploring self-supervised latent prediction for reasoning tasks.</p>
                 </div>
                 <div class="footer-links">
                     <h4>Project</h4>
