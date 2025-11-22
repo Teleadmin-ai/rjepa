@@ -67,7 +67,6 @@ out/
 
 # Keep structure
 !.gitkeep
-CLAUDE.md
 
 # Private Directory (synced to rjepa-private repo only)
 private/
@@ -75,3 +74,11 @@ private/
 # Private notes
 claude2.md
 gpt5.md
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# FICHIERS PRIVÉS (sync vers rjepa-private uniquement)
+# ═══════════════════════════════════════════════════════════════════════════════
+CLAUDE.md
+configs/rjepa/train.yaml
+scripts/retrain_from_feedback.py
+rjepa/pipeline/continuous_learning.py
