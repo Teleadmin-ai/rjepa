@@ -169,6 +169,38 @@
             color: var(--accent);
         }
 
+        /* Language Selector */
+        .lang-selector {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            margin-left: 20px;
+            background: var(--bg-card);
+            border-radius: 8px;
+            padding: 5px;
+        }
+
+        .lang-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            padding: 5px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+
+        .lang-btn:hover {
+            color: var(--text);
+        }
+
+        .lang-btn.active {
+            background: var(--primary);
+            color: white;
+        }
+
         /* Hero Section */
         .hero {
             padding: 120px 0 100px;
@@ -925,13 +957,17 @@
                     R-JEPA
                 </a>
                 <ul class="nav-links">
-                    <li><a href="about.html">About</a></li>
-                    <li><a href="#how-it-works">How It Works</a></li>
-                    <li><a href="#features">Features</a></li>
-                    <li><a href="#pricing">Pricing</a></li>
-                    <li><a href="#modes">Inference</a></li>
+                    <li><a href="about.html" data-i18n="nav.about">About</a></li>
+                    <li><a href="#how-it-works" data-i18n="nav.howItWorks">How It Works</a></li>
+                    <li><a href="#features" data-i18n="nav.features">Features</a></li>
+                    <li><a href="#pricing" data-i18n="nav.pricing">Pricing</a></li>
+                    <li><a href="#modes" data-i18n="nav.inference">Inference</a></li>
                     <li><a href="https://github.com/Teleadmin-ai/rjepa">GitHub</a></li>
                 </ul>
+                <div class="lang-selector">
+                    <button class="lang-btn active" data-lang="en">EN</button>
+                    <button class="lang-btn" data-lang="fr">FR</button>
+                </div>
             </nav>
         </div>
     </header>
@@ -939,20 +975,20 @@
     <section class="hero">
         <div class="container">
             <div class="hero-content">
-                <span class="hero-badge">Based on V-JEPA & Yann LeCun's Work (2022-2024)</span>
+                <span class="hero-badge" data-i18n="hero.badge">Based on V-JEPA & Yann LeCun's Work (2022-2024)</span>
                 <h1>R-JEPA</h1>
-                <p class="tagline">Reasoning Joint Embedding Predictive Architecture</p>
-                <p class="subtitle">
+                <p class="tagline" data-i18n="hero.tagline">Reasoning Joint Embedding Predictive Architecture</p>
+                <p class="subtitle" data-i18n="hero.subtitle">
                     An <strong>experimental World Model for Text Reasoning</strong> that operates on latent representations instead of tokens.
                     Adapts Meta AI's V-JEPA (video prediction) approach to textual reasoning sequences.
                 </p>
                 <div class="cta-buttons">
-                    <a href="about.html" class="btn btn-primary">
+                    <a href="about.html" class="btn btn-primary" data-i18n="hero.learnMore">
                         Learn More
                     </a>
                     <a href="https://github.com/Teleadmin-ai/rjepa" class="btn btn-secondary">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
-                        View on GitHub
+                        <span data-i18n="hero.viewGithub">View on GitHub</span>
                     </a>
                 </div>
             </div>
@@ -961,28 +997,28 @@
 
     <section class="how-it-works" id="how-it-works">
         <div class="container">
-            <h2>How It Works</h2>
-            <p class="section-subtitle">R-JEPA operates on LLM hidden states to understand and improve reasoning chains</p>
+            <h2 data-i18n="howItWorks.title">How It Works</h2>
+            <p class="section-subtitle" data-i18n="howItWorks.subtitle">R-JEPA operates on LLM hidden states to understand and improve reasoning chains</p>
             <div class="workflow">
                 <div class="workflow-step">
                     <div class="step-number">1</div>
-                    <h3>Extract Latents</h3>
-                    <p>Extract hidden states from LLM reasoning steps (layer -2)</p>
+                    <h3 data-i18n="howItWorks.step1.title">Extract Latents</h3>
+                    <p data-i18n="howItWorks.step1.desc">Extract hidden states from LLM reasoning steps (layer -2)</p>
                 </div>
                 <div class="workflow-step">
                     <div class="step-number">2</div>
-                    <h3>Mask & Predict</h3>
-                    <p>Mask reasoning steps and predict their latent representations</p>
+                    <h3 data-i18n="howItWorks.step2.title">Mask & Predict</h3>
+                    <p data-i18n="howItWorks.step2.desc">Mask reasoning steps and predict their latent representations</p>
                 </div>
                 <div class="workflow-step">
                     <div class="step-number">3</div>
-                    <h3>Learn Invariants</h3>
-                    <p>Learn stable relationships between concepts (like physics of thought)</p>
+                    <h3 data-i18n="howItWorks.step3.title">Learn Invariants</h3>
+                    <p data-i18n="howItWorks.step3.desc">Learn stable relationships between concepts (like physics of thought)</p>
                 </div>
                 <div class="workflow-step">
                     <div class="step-number">4</div>
-                    <h3>Guide Reasoning</h3>
-                    <p>Use learned world model to correct, complete, or re-rank reasoning</p>
+                    <h3 data-i18n="howItWorks.step4.title">Guide Reasoning</h3>
+                    <p data-i18n="howItWorks.step4.desc">Use learned world model to correct, complete, or re-rank reasoning</p>
                 </div>
             </div>
         </div>
@@ -1028,12 +1064,12 @@
 
     <section class="pricing" id="pricing">
         <div class="container">
-            <h2>Choose Your Plan</h2>
-            <p class="section-subtitle">Full open-source flexibility or managed cloud service with advanced features. Your data stays private either way.</p>
+            <h2 data-i18n="pricing.title">Choose Your Plan</h2>
+            <p class="section-subtitle" data-i18n="pricing.subtitle">Full open-source flexibility or managed cloud service with advanced features. Your data stays private either way.</p>
             <div class="pricing-grid">
                 <div class="pricing-card">
-                    <h3>🌐 Community Edition Alpha</h3>
-                    <div class="price">Free <span>/ forever</span></div>
+                    <h3 data-i18n="pricing.community.title">🌐 Community Edition Alpha</h3>
+                    <div class="price"><span data-i18n="pricing.community.price">Free</span> <span data-i18n="pricing.community.priceUnit">/ forever</span></div>
                     <ul>
                         <li>Full R-JEPA source code (MIT License)</li>
                         <li>Train your own models on your hardware</li>
@@ -1045,29 +1081,30 @@
                     </ul>
                     <a href="https://github.com/Teleadmin-ai/rjepa" class="btn btn-secondary">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
-                        Get Started Free
+                        <span data-i18n="pricing.getStarted">Get Started Free</span>
                     </a>
                 </div>
                 <div class="pricing-card featured">
-                    <h3>☁️ Cloud API</h3>
-                    <div class="price">Pay-per-use <span>/ token</span></div>
+                    <h3 data-i18n="pricing.cloud.title">☁️ Cloud API</h3>
+                    <div class="price"><span data-i18n="pricing.cloud.price">Pay-per-use</span> <span data-i18n="pricing.cloud.priceUnit">/ token</span></div>
                     <ul>
                         <li>Pre-trained checkpoints (no GPU required)</li>
                         <li>REST API for reasoning guidance</li>
-                        <li><strong>Associative Memory System</strong>: Persistent high-value memory on-the-fly, without sending any text data to us</li>
+                        <li><strong>Associative Memory System</strong>: <span data-i18n="pricing.cloud.memory">Persistent high-value memory on-the-fly, without sending any text data to us</span></li>
                         <li><strong>Multi-Model</strong>: Switch LLM backends instantly</li>
                         <li><strong>Auto-scaling</strong>: Handle any load</li>
                         <li>Priority support & SLA guarantee</li>
                         <li>Usage dashboard & analytics</li>
+                        <li data-i18n="pricing.cloud.ovh">Hosted on <strong>OVHcloud Partner Network</strong> 🇫🇷</li>
                     </ul>
-                    <a href="mailto:commercial@teleadmin.net?subject=R-JEPA Cloud API Interest" class="btn btn-primary">
+                    <a href="mailto:commercial@teleadmin.net?subject=R-JEPA Cloud API Interest" class="btn btn-primary" data-i18n="pricing.joinWaitlist">
                         Join Waitlist
                     </a>
                 </div>
             </div>
             <div class="privacy-note">
-                <h4>🔒 Privacy-First Architecture</h4>
-                <p>
+                <h4 data-i18n="privacy.title">🔒 Privacy-First Architecture</h4>
+                <p data-i18n="privacy.content">
                     With R-JEPA Cloud, <strong>your text data never leaves your infrastructure</strong>. Here's how it works:<br><br>
                     1. You extract latent vectors locally from your LLM (4096-dim abstract representations)<br>
                     2. Only these <strong>latent vectors</strong> are sent to our API — they act as pointers<br>
@@ -1273,10 +1310,10 @@ flowchart TB
             <div class="footer-content">
                 <div class="footer-brand">
                     <h3>🧠 R-JEPA</h3>
-                    <p>An experimental implementation adapting Meta AI's V-JEPA approach to textual reasoning. Open-source project exploring self-supervised latent prediction for reasoning tasks.</p>
+                    <p data-i18n="footer.description">An experimental implementation adapting Meta AI's V-JEPA approach to textual reasoning. Open-source project exploring self-supervised latent prediction for reasoning tasks.</p>
                 </div>
                 <div class="footer-links">
-                    <h4>Project</h4>
+                    <h4 data-i18n="footer.project">Project</h4>
                     <ul>
                         <li><a href="https://github.com/Teleadmin-ai/rjepa">GitHub Repository</a></li>
                         <li><a href="https://github.com/Teleadmin-ai/rjepa#quick-start">Documentation</a></li>
@@ -1284,7 +1321,7 @@ flowchart TB
                     </ul>
                 </div>
                 <div class="footer-links">
-                    <h4>Legal & Contact</h4>
+                    <h4 data-i18n="footer.legal">Legal & Contact</h4>
                     <ul>
                         <li><a href="https://github.com/Teleadmin-ai/rjepa/blob/main/LICENSE">License (MIT)</a></li>
                         <li><a href="mailto:commercial@teleadmin.net">Contact</a></li>
@@ -1294,6 +1331,7 @@ flowchart TB
             </div>
             <div class="footer-bottom">
                 <p>&copy; 2025 <a href="https://github.com/Teleadmin-ai">Teleadmin</a>. Created by Romain Provencal. All rights reserved.</p>
+                <p style="margin-top: 10px; font-size: 0.85rem;"><a href="https://www.ovhcloud.com/fr/partner/" target="_blank" style="color: var(--text-muted);"><span data-i18n="footer.ovh">OVHcloud Advanced Partner</span></a> 🇫🇷</p>
             </div>
         </div>
     </footer>
@@ -1326,6 +1364,150 @@ flowchart TB
                 rankSpacing: 80,
                 htmlLabels: true
             }
+        });
+    </script>
+
+    <!-- i18n Translations -->
+    <script>
+        const translations = {
+            en: {
+                // Navigation
+                "nav.about": "About",
+                "nav.howItWorks": "How It Works",
+                "nav.features": "Features",
+                "nav.pricing": "Pricing",
+                "nav.inference": "Inference",
+
+                // Hero
+                "hero.badge": "Based on V-JEPA & Yann LeCun's Work (2022-2024)",
+                "hero.tagline": "Reasoning Joint Embedding Predictive Architecture",
+                "hero.subtitle": "An <strong>experimental World Model for Text Reasoning</strong> that operates on latent representations instead of tokens. Adapts Meta AI's V-JEPA (video prediction) approach to textual reasoning sequences.",
+                "hero.learnMore": "Learn More",
+                "hero.viewGithub": "View on GitHub",
+
+                // How It Works
+                "howItWorks.title": "How It Works",
+                "howItWorks.subtitle": "R-JEPA operates on LLM hidden states to understand and improve reasoning chains",
+                "howItWorks.step1.title": "Extract Latents",
+                "howItWorks.step1.desc": "Extract hidden states from LLM reasoning steps (layer -2)",
+                "howItWorks.step2.title": "Mask & Predict",
+                "howItWorks.step2.desc": "Mask reasoning steps and predict their latent representations",
+                "howItWorks.step3.title": "Learn Invariants",
+                "howItWorks.step3.desc": "Learn stable relationships between concepts (like physics of thought)",
+                "howItWorks.step4.title": "Guide Reasoning",
+                "howItWorks.step4.desc": "Use learned world model to correct, complete, or re-rank reasoning",
+
+                // Pricing
+                "pricing.title": "Choose Your Plan",
+                "pricing.subtitle": "Full open-source flexibility or managed cloud service with advanced features. Your data stays private either way.",
+                "pricing.community.title": "🌐 Community Edition Alpha",
+                "pricing.community.price": "Free",
+                "pricing.community.priceUnit": "/ forever",
+                "pricing.cloud.title": "☁️ Cloud API",
+                "pricing.cloud.price": "Pay-per-use",
+                "pricing.cloud.priceUnit": "/ token",
+                "pricing.cloud.memory": "Persistent high-value memory on-the-fly, without sending any text data to us",
+                "pricing.cloud.ovh": "Hosted on <strong>OVHcloud Partner Network</strong> 🇫🇷",
+                "pricing.getStarted": "Get Started Free",
+                "pricing.joinWaitlist": "Join Waitlist",
+
+                // Privacy Note
+                "privacy.title": "🔒 Privacy-First Architecture",
+                "privacy.content": "With R-JEPA Cloud, <strong>your text data never leaves your infrastructure</strong>. Here's how it works:<br><br>1. You extract latent vectors locally from your LLM (4096-dim abstract representations)<br>2. Only these <strong>latent vectors</strong> are sent to our API — they act as pointers<br>3. Your text stays in your local database, indexed by these latent references<br>4. We return memory indices + guidance — you reconstruct context locally<br><br>Latent vectors are <strong>mathematically irreversible</strong> — impossible to reconstruct original text. Compatible with <strong>GDPR, HIPAA, and enterprise security requirements</strong>.",
+
+                // Footer
+                "footer.description": "An experimental implementation adapting Meta AI's V-JEPA approach to textual reasoning. Open-source project exploring self-supervised latent prediction for reasoning tasks.",
+                "footer.project": "Project",
+                "footer.legal": "Legal & Contact",
+                "footer.ovh": "OVHcloud Advanced Partner"
+            },
+            fr: {
+                // Navigation
+                "nav.about": "À propos",
+                "nav.howItWorks": "Fonctionnement",
+                "nav.features": "Fonctionnalités",
+                "nav.pricing": "Tarifs",
+                "nav.inference": "Inférence",
+
+                // Hero
+                "hero.badge": "Basé sur V-JEPA & les travaux de Yann LeCun (2022-2024)",
+                "hero.tagline": "Architecture Prédictive à Embeddings Joints pour le Raisonnement",
+                "hero.subtitle": "Un <strong>World Model expérimental pour le Raisonnement Textuel</strong> qui opère sur les représentations latentes plutôt que les tokens. Adapte l'approche V-JEPA de Meta AI (prédiction vidéo) aux séquences de raisonnement textuel.",
+                "hero.learnMore": "En savoir plus",
+                "hero.viewGithub": "Voir sur GitHub",
+
+                // How It Works
+                "howItWorks.title": "Comment ça marche",
+                "howItWorks.subtitle": "R-JEPA opère sur les états cachés du LLM pour comprendre et améliorer les chaînes de raisonnement",
+                "howItWorks.step1.title": "Extraction des Latents",
+                "howItWorks.step1.desc": "Extrait les états cachés des étapes de raisonnement du LLM (couche -2)",
+                "howItWorks.step2.title": "Masquage & Prédiction",
+                "howItWorks.step2.desc": "Masque les étapes de raisonnement et prédit leurs représentations latentes",
+                "howItWorks.step3.title": "Apprentissage des Invariants",
+                "howItWorks.step3.desc": "Apprend les relations stables entre concepts (comme la physique de la pensée)",
+                "howItWorks.step4.title": "Guidage du Raisonnement",
+                "howItWorks.step4.desc": "Utilise le world model appris pour corriger, compléter ou re-classer le raisonnement",
+
+                // Pricing
+                "pricing.title": "Choisissez votre offre",
+                "pricing.subtitle": "Flexibilité open-source complète ou service cloud managé avec fonctionnalités avancées. Vos données restent privées dans les deux cas.",
+                "pricing.community.title": "🌐 Édition Communautaire Alpha",
+                "pricing.community.price": "Gratuit",
+                "pricing.community.priceUnit": "/ pour toujours",
+                "pricing.cloud.title": "☁️ API Cloud",
+                "pricing.cloud.price": "Paiement à l'usage",
+                "pricing.cloud.priceUnit": "/ token",
+                "pricing.cloud.memory": "Mémoire persistante haute valeur à la volée, sans envoyer aucune donnée texte",
+                "pricing.cloud.ovh": "Hébergé sur <strong>OVHcloud Partner Network</strong> 🇫🇷",
+                "pricing.getStarted": "Commencer gratuitement",
+                "pricing.joinWaitlist": "Rejoindre la liste d'attente",
+
+                // Privacy Note
+                "privacy.title": "🔒 Architecture Privacy-First",
+                "privacy.content": "Avec R-JEPA Cloud, <strong>vos données texte ne quittent jamais votre infrastructure</strong>. Voici comment ça marche :<br><br>1. Vous extrayez les vecteurs latents localement depuis votre LLM (représentations abstraites 4096-dim)<br>2. Seuls ces <strong>vecteurs latents</strong> sont envoyés à notre API — ils agissent comme des pointeurs<br>3. Votre texte reste dans votre base de données locale, indexé par ces références latentes<br>4. Nous retournons les indices mémoire + le guidage — vous reconstruisez le contexte localement<br><br>Les vecteurs latents sont <strong>mathématiquement irréversibles</strong> — impossible de reconstruire le texte original. Compatible avec <strong>RGPD, HIPAA et les exigences de sécurité entreprise</strong>.",
+
+                // Footer
+                "footer.description": "Une implémentation expérimentale adaptant l'approche V-JEPA de Meta AI au raisonnement textuel. Projet open-source explorant la prédiction latente auto-supervisée pour les tâches de raisonnement.",
+                "footer.project": "Projet",
+                "footer.legal": "Légal & Contact",
+                "footer.ovh": "Partenaire Avancé OVHcloud"
+            }
+        };
+
+        // Apply translations
+        function setLanguage(lang) {
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (translations[lang] && translations[lang][key]) {
+                    el.innerHTML = translations[lang][key];
+                }
+            });
+
+            // Update active button
+            document.querySelectorAll('.lang-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.lang === lang);
+            });
+
+            // Save preference
+            localStorage.setItem('rjepa-lang', lang);
+
+            // Update HTML lang attribute
+            document.documentElement.lang = lang;
+        }
+
+        // Initialize language
+        document.addEventListener('DOMContentLoaded', () => {
+            // Get saved language or detect from browser
+            const savedLang = localStorage.getItem('rjepa-lang');
+            const browserLang = navigator.language.startsWith('fr') ? 'fr' : 'en';
+            const initialLang = savedLang || browserLang;
+
+            setLanguage(initialLang);
+
+            // Add click handlers
+            document.querySelectorAll('.lang-btn').forEach(btn => {
+                btn.addEventListener('click', () => setLanguage(btn.dataset.lang));
+            });
         });
     </script>
 </body>
