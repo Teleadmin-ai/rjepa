@@ -1091,6 +1091,8 @@
                         <li>Pre-trained checkpoints (no GPU required)</li>
                         <li>REST API for reasoning guidance</li>
                         <li><strong>Associative Memory System</strong>: <span data-i18n="pricing.cloud.memory">Persistent high-value memory on-the-fly, without sending any text data to us</span></li>
+                        <li><strong>Dual Learning Mode</strong>: <span data-i18n="pricing.cloud.dual">LLM adapts to R-JEPA guidance (unidirectional, never reverse)</span></li>
+                        <li><strong>ValidationGate</strong>: <span data-i18n="pricing.cloud.validation">Automatic CoT validation before memory storage</span></li>
                         <li><strong>Multi-Model</strong>: Switch LLM backends instantly</li>
                         <li><strong>Auto-scaling</strong>: Handle any load</li>
                         <li>Priority support & SLA guarantee</li>
@@ -1113,6 +1115,25 @@
                     Latent vectors are <strong>mathematically irreversible</strong> — impossible to reconstruct original text.
                     Compatible with <strong>GDPR, HIPAA, and enterprise security requirements</strong>.
                 </p>
+            </div>
+
+            <!-- Cloud Advanced Features -->
+            <div class="features-grid" style="margin-top: 60px;">
+                <div class="feature-card">
+                    <div class="feature-icon">🧠</div>
+                    <h3 data-i18n="cloud.memory.title">Associative Memory System</h3>
+                    <p data-i18n="cloud.memory.desc">Latents act as pointers to your local database. Store experiences, retrieve by semantic similarity. Your text stays local — we only see abstract vectors. Cross-session context without privacy compromise.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🔄</div>
+                    <h3 data-i18n="cloud.dual.title">Dual Learning Architecture</h3>
+                    <p data-i18n="cloud.dual.desc">LLM adapts to R-JEPA guidance — never the reverse. R-JEPA learns from validated reasoning only. Prevents hallucination contamination through strict unidirectional flow.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🛡️</div>
+                    <h3 data-i18n="cloud.validation.title">ValidationGate</h3>
+                    <p data-i18n="cloud.validation.desc">Cognitive firewall: Only mathematically or logically verified CoTs enter memory. Sympy for math, sandboxed execution for code. Prevents learning from incorrect reasoning paths.</p>
+                </div>
             </div>
         </div>
     </section>
@@ -1407,6 +1428,8 @@ flowchart TB
                 "pricing.cloud.price": "Pay-per-use",
                 "pricing.cloud.priceUnit": "/ token",
                 "pricing.cloud.memory": "Persistent high-value memory on-the-fly, without sending any text data to us",
+                "pricing.cloud.dual": "LLM adapts to R-JEPA guidance (unidirectional, never reverse)",
+                "pricing.cloud.validation": "Automatic CoT validation before memory storage",
                 "pricing.cloud.ovh": "Hosted on <strong>OVHcloud Partner Network</strong> 🇫🇷",
                 "pricing.getStarted": "Get Started Free",
                 "pricing.joinWaitlist": "Join Waitlist",
@@ -1414,6 +1437,14 @@ flowchart TB
                 // Privacy Note
                 "privacy.title": "🔒 Privacy-First Architecture",
                 "privacy.content": "With R-JEPA Cloud, <strong>your text data never leaves your infrastructure</strong>. Here's how it works:<br><br>1. You extract latent vectors locally from your LLM (4096-dim abstract representations)<br>2. Only these <strong>latent vectors</strong> are sent to our API — they act as pointers<br>3. Your text stays in your local database, indexed by these latent references<br>4. We return memory indices + guidance — you reconstruct context locally<br><br>Latent vectors are <strong>mathematically irreversible</strong> — impossible to reconstruct original text. Compatible with <strong>GDPR, HIPAA, and enterprise security requirements</strong>.",
+
+                // Cloud Advanced Features
+                "cloud.memory.title": "Associative Memory System",
+                "cloud.memory.desc": "Latents act as pointers to your local database. Store experiences, retrieve by semantic similarity. Your text stays local — we only see abstract vectors. Cross-session context without privacy compromise.",
+                "cloud.dual.title": "Dual Learning Architecture",
+                "cloud.dual.desc": "LLM adapts to R-JEPA guidance — never the reverse. R-JEPA learns from validated reasoning only. Prevents hallucination contamination through strict unidirectional flow.",
+                "cloud.validation.title": "ValidationGate",
+                "cloud.validation.desc": "Cognitive firewall: Only mathematically or logically verified CoTs enter memory. Sympy for math, sandboxed execution for code. Prevents learning from incorrect reasoning paths.",
 
                 // Footer
                 "footer.description": "An experimental implementation adapting Meta AI's V-JEPA approach to textual reasoning. Open-source project exploring self-supervised latent prediction for reasoning tasks.",
@@ -1458,6 +1489,8 @@ flowchart TB
                 "pricing.cloud.price": "Paiement à l'usage",
                 "pricing.cloud.priceUnit": "/ token",
                 "pricing.cloud.memory": "Mémoire persistante haute valeur à la volée, sans envoyer aucune donnée texte",
+                "pricing.cloud.dual": "Le LLM s'adapte au guidage R-JEPA (unidirectionnel, jamais l'inverse)",
+                "pricing.cloud.validation": "Validation automatique des CoT avant stockage en mémoire",
                 "pricing.cloud.ovh": "Hébergé sur <strong>OVHcloud Partner Network</strong> 🇫🇷",
                 "pricing.getStarted": "Commencer gratuitement",
                 "pricing.joinWaitlist": "Rejoindre la liste d'attente",
@@ -1465,6 +1498,14 @@ flowchart TB
                 // Privacy Note
                 "privacy.title": "🔒 Architecture Privacy-First",
                 "privacy.content": "Avec R-JEPA Cloud, <strong>vos données texte ne quittent jamais votre infrastructure</strong>. Voici comment ça marche :<br><br>1. Vous extrayez les vecteurs latents localement depuis votre LLM (représentations abstraites 4096-dim)<br>2. Seuls ces <strong>vecteurs latents</strong> sont envoyés à notre API — ils agissent comme des pointeurs<br>3. Votre texte reste dans votre base de données locale, indexé par ces références latentes<br>4. Nous retournons les indices mémoire + le guidage — vous reconstruisez le contexte localement<br><br>Les vecteurs latents sont <strong>mathématiquement irréversibles</strong> — impossible de reconstruire le texte original. Compatible avec <strong>RGPD, HIPAA et les exigences de sécurité entreprise</strong>.",
+
+                // Cloud Advanced Features
+                "cloud.memory.title": "Système de Mémoire Associative",
+                "cloud.memory.desc": "Les latents agissent comme des pointeurs vers votre base de données locale. Stockez des expériences, retrouvez par similarité sémantique. Votre texte reste local — nous ne voyons que des vecteurs abstraits. Contexte cross-session sans compromis de confidentialité.",
+                "cloud.dual.title": "Architecture Dual Learning",
+                "cloud.dual.desc": "Le LLM s'adapte au guidage R-JEPA — jamais l'inverse. R-JEPA apprend uniquement du raisonnement validé. Prévient la contamination par hallucination via un flux strictement unidirectionnel.",
+                "cloud.validation.title": "ValidationGate",
+                "cloud.validation.desc": "Pare-feu cognitif : Seuls les CoT mathématiquement ou logiquement vérifiés entrent en mémoire. Sympy pour les maths, exécution sandboxée pour le code. Empêche l'apprentissage de raisonnements incorrects.",
 
                 // Footer
                 "footer.description": "Une implémentation expérimentale adaptant l'approche V-JEPA de Meta AI au raisonnement textuel. Projet open-source explorant la prédiction latente auto-supervisée pour les tâches de raisonnement.",
