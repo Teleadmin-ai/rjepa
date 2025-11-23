@@ -453,6 +453,27 @@
             line-height: 1.5;
         }
 
+        /* Mermaid Diagram Styles */
+        .mermaid-container {
+            background: var(--bg-dark);
+            padding: 30px;
+            border-radius: 16px;
+            border: 1px solid rgba(255,255,255,0.1);
+            max-width: 1000px;
+            margin: 0 auto;
+            overflow-x: auto;
+        }
+
+        .mermaid {
+            display: flex;
+            justify-content: center;
+        }
+
+        .mermaid svg {
+            max-width: 100%;
+            height: auto;
+        }
+
         .arch-legend {
             display: flex;
             justify-content: center;
@@ -1062,35 +1083,67 @@
         <div class="container">
             <h2>Architecture</h2>
             <p class="section-subtitle">Dual-encoder architecture with EMA target encoder, inspired by V-JEPA</p>
-            <div class="arch-visual">
-                <div class="arch-diagram">
-                           R-JEPA World Model Architecture
+            <div class="mermaid-container">
+                <pre class="mermaid">
+flowchart TB
+    subgraph INPUT["📥 Input: LLM Latents"]
+        H["H [B, S, 4096]<br/>from Qwen3-8B layer -2"]
+    end
 
-  Input: LLM latents [B, S, 4096] (from Qwen3-8B layer -2)
+    subgraph MASKING["🎭 Masking Strategy"]
+        M["Contiguous Masking<br/>30-70% of steps"]
+    end
 
-  ┌─────────────────────┐     ┌─────────────────┐     ┌─────────────────────┐
-  │   Context Encoder   │ ──▶ │    Predictor    │ ──▶ │      z_pred         │
-  │     (trainable)     │     │   (trainable)   │     │  (predicted latents)│
-  └─────────────────────┘     └─────────────────┘     └──────────┬──────────┘
-                                                                  │
-  ┌─────────────────────┐                                        ▼
-  │   Target Encoder    │ ──────────────────────────────▶   z_target
-  │   (EMA, frozen)     │                                   (ground truth)
-  └─────────────────────┘
+    subgraph CONTEXT["🟢 Context Encoder"]
+        CE["StepTransformer<br/>6 layers, 2048-dim, 16 heads<br/><b>TRAINABLE</b>"]
+    end
 
-  Loss = L1(z_pred, z_target) + variance_reg + contrastive_loss</div>
+    subgraph TARGET["🟡 Target Encoder"]
+        TE["StepTransformer<br/>EMA copy (τ = 0.996→0.9999)<br/><b>FROZEN</b>"]
+    end
+
+    subgraph PREDICTOR["🔵 Predictor"]
+        P["StepPredictor<br/>4 layers<br/><b>TRAINABLE</b>"]
+    end
+
+    subgraph OUTPUTS["📤 Outputs"]
+        Z_PRED["z_pred<br/>Predicted Latents"]
+        Z_TARGET["z_target<br/>Ground Truth"]
+    end
+
+    subgraph LOSS["📉 Loss Function"]
+        L["<b>Loss = L1(z_pred, z_target)</b><br/>+ variance_reg (0.01)<br/>+ contrastive (0.1)"]
+    end
+
+    H --> M
+    M -->|visible steps| CE
+    M -->|all steps| TE
+    CE --> P
+    P --> Z_PRED
+    TE --> Z_TARGET
+    Z_PRED --> L
+    Z_TARGET --> L
+
+    style INPUT fill:#1e293b,stroke:#6366f1,stroke-width:2px,color:#e2e8f0
+    style MASKING fill:#1e293b,stroke:#22d3ee,stroke-width:2px,color:#e2e8f0
+    style CONTEXT fill:#134e4a,stroke:#22c55e,stroke-width:3px,color:#e2e8f0
+    style TARGET fill:#422006,stroke:#f59e0b,stroke-width:3px,color:#e2e8f0
+    style PREDICTOR fill:#1e1b4b,stroke:#6366f1,stroke-width:3px,color:#e2e8f0
+    style OUTPUTS fill:#1e293b,stroke:#0ea5e9,stroke-width:2px,color:#e2e8f0
+    style LOSS fill:#4c1d95,stroke:#a78bfa,stroke-width:2px,color:#e2e8f0
+                </pre>
                 <div class="arch-legend">
                     <div class="legend-item">
                         <div class="legend-color legend-trained"></div>
-                        <span>Trainable Components</span>
+                        <span>Trainable (Context Encoder + Predictor)</span>
                     </div>
                     <div class="legend-item">
                         <div class="legend-color legend-ema"></div>
-                        <span>EMA Updated (frozen)</span>
+                        <span>EMA Updated (Target Encoder)</span>
                     </div>
                     <div class="legend-item">
                         <div class="legend-color legend-predictor"></div>
-                        <span>Prediction Target</span>
+                        <span>Loss Computation</span>
                     </div>
                 </div>
             </div>
@@ -1243,5 +1296,36 @@
             </div>
         </div>
     </footer>
+
+    <!-- Mermaid JS for diagram rendering -->
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'dark',
+            themeVariables: {
+                primaryColor: '#6366f1',
+                primaryTextColor: '#e2e8f0',
+                primaryBorderColor: '#6366f1',
+                lineColor: '#94a3b8',
+                secondaryColor: '#1e293b',
+                tertiaryColor: '#0f172a',
+                background: '#0f172a',
+                mainBkg: '#1e293b',
+                nodeBorder: '#6366f1',
+                clusterBkg: '#1e293b',
+                clusterBorder: '#6366f1',
+                titleColor: '#e2e8f0',
+                edgeLabelBackground: '#1e293b'
+            },
+            flowchart: {
+                curve: 'basis',
+                padding: 20,
+                nodeSpacing: 50,
+                rankSpacing: 80,
+                htmlLabels: true
+            }
+        });
+    </script>
 </body>
 </html>
