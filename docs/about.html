@@ -51,6 +51,37 @@
         .nav-links a { color: var(--text-muted); text-decoration: none; font-weight: 500; }
         .nav-links a:hover { color: var(--accent); }
 
+        /* Language Selector */
+        .lang-selector {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            margin-left: 20px;
+            background: var(--bg-card);
+            border-radius: 8px;
+            padding: 5px;
+        }
+        .lang-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            padding: 5px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+        .lang-btn:hover { color: var(--text); }
+        .lang-btn.active {
+            background: var(--primary);
+            color: white;
+        }
+        .nav-right {
+            display: flex;
+            align-items: center;
+        }
+
         .hero {
             padding: 80px 0 60px;
             text-align: center;
@@ -183,49 +214,55 @@
     <header>
         <nav>
             <a href="/" class="logo"><span>🧠</span> R-JEPA</a>
-            <ul class="nav-links">
-                <li><a href="/">Home</a></li>
-                <li><a href="#problem">The Problem</a></li>
-                <li><a href="#approach">Our Approach</a></li>
-                <li><a href="#modes">How It Helps</a></li>
-                <li><a href="https://github.com/Teleadmin-ai/rjepa">GitHub</a></li>
-            </ul>
+            <div class="nav-right">
+                <ul class="nav-links">
+                    <li><a href="/" data-i18n="nav.home">Home</a></li>
+                    <li><a href="#problem" data-i18n="nav.problem">The Problem</a></li>
+                    <li><a href="#approach" data-i18n="nav.approach">Our Approach</a></li>
+                    <li><a href="#modes" data-i18n="nav.modes">How It Helps</a></li>
+                    <li><a href="https://github.com/Teleadmin-ai/rjepa">GitHub</a></li>
+                </ul>
+                <div class="lang-selector">
+                    <button class="lang-btn" data-lang="en">EN</button>
+                    <button class="lang-btn" data-lang="fr">FR</button>
+                </div>
+            </div>
         </nav>
     </header>
 
     <section class="hero">
         <div class="container">
-            <h1>Understanding R-JEPA</h1>
-            <p>What it does, why it matters, and how it works — in plain language</p>
+            <h1 data-i18n="hero.title">Understanding R-JEPA</h1>
+            <p data-i18n="hero.subtitle">What it does, why it matters, and how it works — in plain language</p>
         </div>
     </section>
 
     <section class="content">
         <div class="container">
 
-            <h2 id="problem">The Problem We're Solving</h2>
+            <h2 id="problem" data-i18n="problem.title">The Problem We're Solving</h2>
 
-            <p>Large language models are remarkably capable, but they have a curious weakness: they don't really <em>think</em> about what they're saying. When a model solves a math problem or writes code, it's essentially predicting the next word based on patterns it learned during training. There's no internal voice checking if the reasoning makes sense.</p>
+            <p data-i18n="problem.p1">Large language models are remarkably capable, but they have a curious weakness: they don't really <em>think</em> about what they're saying. When a model solves a math problem or writes code, it's essentially predicting the next word based on patterns it learned during training. There's no internal voice checking if the reasoning makes sense.</p>
 
-            <p>This leads to a familiar frustration. The model confidently writes "Step 1... Step 2... Step 3..." — and the final answer is wrong. Not because the model lacks knowledge, but because somewhere in the middle, a reasoning step went off track, and nothing caught it.</p>
+            <p data-i18n="problem.p2">This leads to a familiar frustration. The model confidently writes "Step 1... Step 2... Step 3..." — and the final answer is wrong. Not because the model lacks knowledge, but because somewhere in the middle, a reasoning step went off track, and nothing caught it.</p>
 
-            <p>What if we could give the model a way to <strong>sense when its reasoning drifts</strong>? Not by adding more rules, but by teaching it what good reasoning <em>feels like</em> at a deeper level?</p>
+            <p data-i18n="problem.p3">What if we could give the model a way to <strong>sense when its reasoning drifts</strong>? Not by adding more rules, but by teaching it what good reasoning <em>feels like</em> at a deeper level?</p>
 
-            <h2 id="approach">Our Approach: Learning the Shape of Good Reasoning</h2>
+            <h2 id="approach" data-i18n="approach.title">Our Approach: Learning the Shape of Good Reasoning</h2>
 
-            <p>R-JEPA takes a different approach from traditional methods. Instead of looking at the words a model produces, we look at its <strong>internal representations</strong> — the hidden patterns of activation inside the neural network as it thinks through each step.</p>
+            <p data-i18n="approach.p1">R-JEPA takes a different approach from traditional methods. Instead of looking at the words a model produces, we look at its <strong>internal representations</strong> — the hidden patterns of activation inside the neural network as it thinks through each step.</p>
 
-            <p>These internal states, which we call "latents," are like a fingerprint of what the model is actually computing at each moment. A correct reasoning step has a certain shape in this latent space. An incorrect one looks different.</p>
+            <p data-i18n="approach.p2">These internal states, which we call "latents," are like a fingerprint of what the model is actually computing at each moment. A correct reasoning step has a certain shape in this latent space. An incorrect one looks different.</p>
 
             <div class="analogy-box">
-                <h3>An Analogy</h3>
-                <p>Imagine watching someone solve a puzzle. You can't see their thoughts, but you notice their hand movements. Someone who knows what they're doing moves with a certain rhythm — confident, directed, purposeful. Someone who's confused hesitates, backtracks, fumbles.</p>
-                <p>R-JEPA learns to recognize this rhythm, but in the space of neural activations. It learns what the "confident, directed, purposeful" pattern looks like for correct mathematical reasoning, logical deduction, or code writing.</p>
+                <h3 data-i18n="approach.analogy.title">An Analogy</h3>
+                <p data-i18n="approach.analogy.p1">Imagine watching someone solve a puzzle. You can't see their thoughts, but you notice their hand movements. Someone who knows what they're doing moves with a certain rhythm — confident, directed, purposeful. Someone who's confused hesitates, backtracks, fumbles.</p>
+                <p data-i18n="approach.analogy.p2">R-JEPA learns to recognize this rhythm, but in the space of neural activations. It learns what the "confident, directed, purposeful" pattern looks like for correct mathematical reasoning, logical deduction, or code writing.</p>
             </div>
 
-            <p>The key insight, borrowed from Yann LeCun's work on world models, is that we don't need to predict the actual words. We just need to predict what the <strong>internal state should be</strong> if the reasoning is proceeding correctly. When the actual state diverges from the expected state, something has gone wrong.</p>
+            <p data-i18n="approach.p3">The key insight, borrowed from Yann LeCun's work on world models, is that we don't need to predict the actual words. We just need to predict what the <strong>internal state should be</strong> if the reasoning is proceeding correctly. When the actual state diverges from the expected state, something has gone wrong.</p>
 
-            <h2>How It Works — The Pipeline</h2>
+            <h2 data-i18n="pipeline.title">How It Works — The Pipeline</h2>
 
             <div class="diagram-container">
                 <pre class="mermaid">
@@ -313,7 +350,7 @@ flowchart TB
                 </pre>
             </div>
 
-            <p class="diagram-caption">
+            <p class="diagram-caption" data-i18n="pipeline.caption">
                 <b>The R-JEPA Pipeline:</b> A problem enters the LLM which generates step-by-step reasoning.
                 Each step's hidden state (4096-dim vector from layer -2) is extracted.
                 R-JEPA's Context Encoder + Predictor learn to predict the next latent (ẑ₃) from visible context (h₁, h₂).
@@ -321,54 +358,220 @@ flowchart TB
                 Low L1 loss = coherent reasoning. High loss = potential error detected.
             </p>
 
-            <h2 id="modes">Three Ways R-JEPA Helps</h2>
+            <h2 id="modes" data-i18n="modes.title">Three Ways R-JEPA Helps</h2>
 
             <div class="feature-section">
-                <h3>🎯 RERANK — Picking the Best Answer</h3>
-                <p>The simplest use case. We ask the language model to generate several different solutions to the same problem. Then R-JEPA scores each one based on how "coherent" the reasoning looks in latent space.</p>
-                <p>A solution where each step flows naturally from the previous one will score better than a solution with logical jumps or inconsistencies — even if both arrive at an answer. This doesn't guarantee correctness, but it significantly improves the odds of picking a good solution.</p>
+                <h3 data-i18n="modes.rerank.title">🎯 RERANK — Picking the Best Answer</h3>
+                <p data-i18n="modes.rerank.p1">The simplest use case. We ask the language model to generate several different solutions to the same problem. Then R-JEPA scores each one based on how "coherent" the reasoning looks in latent space.</p>
+                <p data-i18n="modes.rerank.p2">A solution where each step flows naturally from the previous one will score better than a solution with logical jumps or inconsistencies — even if both arrive at an answer. This doesn't guarantee correctness, but it significantly improves the odds of picking a good solution.</p>
             </div>
 
             <div class="feature-section">
-                <h3>🔄 NUDGE — Gentle Course Correction</h3>
-                <p>This is more subtle. Instead of just scoring complete solutions, R-JEPA can influence the model <em>while it's generating</em>. At each step, it predicts what a good next state should look like, then gently biases the model's word choices toward that target.</p>
-                <p>Think of it like a GPS that doesn't just tell you when you've arrived at the wrong destination — it notices when you're about to take a wrong turn and suggests a correction before you commit to it.</p>
-                <p>The bias is gentle (adjustable from subtle to strong), so the model can still follow its intuition while being guided toward more coherent reasoning paths.</p>
+                <h3 data-i18n="modes.nudge.title">🔄 NUDGE — Gentle Course Correction</h3>
+                <p data-i18n="modes.nudge.p1">This is more subtle. Instead of just scoring complete solutions, R-JEPA can influence the model <em>while it's generating</em>. At each step, it predicts what a good next state should look like, then gently biases the model's word choices toward that target.</p>
+                <p data-i18n="modes.nudge.p2">Think of it like a GPS that doesn't just tell you when you've arrived at the wrong destination — it notices when you're about to take a wrong turn and suggests a correction before you commit to it.</p>
+                <p data-i18n="modes.nudge.p3">The bias is gentle (adjustable from subtle to strong), so the model can still follow its intuition while being guided toward more coherent reasoning paths.</p>
             </div>
 
             <div class="feature-section">
-                <h3>📝 PLAN — Filling in the Gaps</h3>
-                <p>Sometimes a model skips steps. It might jump from "we need to solve for x" to "therefore x = 4" without showing the work. R-JEPA can detect these gaps by noticing that the latent space jumped unexpectedly.</p>
-                <p>More importantly, it can predict what the missing steps <em>should</em> look like, and translate those predictions back into text. This helps produce more complete, verifiable reasoning chains.</p>
+                <h3 data-i18n="modes.plan.title">📝 PLAN — Filling in the Gaps</h3>
+                <p data-i18n="modes.plan.p1">Sometimes a model skips steps. It might jump from "we need to solve for x" to "therefore x = 4" without showing the work. R-JEPA can detect these gaps by noticing that the latent space jumped unexpectedly.</p>
+                <p data-i18n="modes.plan.p2">More importantly, it can predict what the missing steps <em>should</em> look like, and translate those predictions back into text. This helps produce more complete, verifiable reasoning chains.</p>
             </div>
 
-            <h2>Working with Different Models</h2>
+            <h2 data-i18n="models.title">Working with Different Models</h2>
 
-            <p>One practical concern: does this only work with one specific language model? Not quite. The latent space of different models in the same family (like Qwen 8B and Qwen 32B) have similar structures. We can train R-JEPA on a smaller model and then adapt it to work with larger ones through a brief calibration process.</p>
+            <p data-i18n="models.p1">One practical concern: does this only work with one specific language model? Not quite. The latent space of different models in the same family (like Qwen 8B and Qwen 32B) have similar structures. We can train R-JEPA on a smaller model and then adapt it to work with larger ones through a brief calibration process.</p>
 
-            <p>This means you can develop and test on accessible hardware, then deploy with more powerful models when needed, without starting from scratch.</p>
+            <p data-i18n="models.p2">This means you can develop and test on accessible hardware, then deploy with more powerful models when needed, without starting from scratch.</p>
 
-            <h2>What This Isn't</h2>
+            <h2 data-i18n="limitations.title">What This Isn't</h2>
 
-            <p>R-JEPA is not a magic solution. It can't make a model understand concepts it never learned. It can't guarantee correct answers. It's not a replacement for careful prompt engineering or domain-specific fine-tuning.</p>
+            <p data-i18n="limitations.p1">R-JEPA is not a magic solution. It can't make a model understand concepts it never learned. It can't guarantee correct answers. It's not a replacement for careful prompt engineering or domain-specific fine-tuning.</p>
 
-            <p>What it offers is a <strong>new lens</strong> on the reasoning process — a way to evaluate and guide model outputs that goes beyond just looking at the words. Think of it as adding a layer of introspection to systems that otherwise operate on pure pattern matching.</p>
+            <p data-i18n="limitations.p2">What it offers is a <strong>new lens</strong> on the reasoning process — a way to evaluate and guide model outputs that goes beyond just looking at the words. Think of it as adding a layer of introspection to systems that otherwise operate on pure pattern matching.</p>
 
-            <h2>The Bigger Picture</h2>
+            <h2 data-i18n="vision.title">The Bigger Picture</h2>
 
-            <p>This project embodies a fundamental conviction: AI systems need an internal model of what they're doing, not just pattern matching on outputs. The V-JEPA approach from Meta AI demonstrated this was possible for video — predicting what should happen next in a scene by understanding the underlying dynamics. R-JEPA applies this same principle to reasoning in text.</p>
+            <p data-i18n="vision.p1">This project embodies a fundamental conviction: AI systems need an internal model of what they're doing, not just pattern matching on outputs. The V-JEPA approach from Meta AI demonstrated this was possible for video — predicting what should happen next in a scene by understanding the underlying dynamics. R-JEPA applies this same principle to reasoning in text.</p>
 
-            <p>Our goal is ambitious: to build AI systems that truly understand the structure of valid reasoning, that can detect when thinking goes astray, and that can guide themselves back toward coherent solutions. This is a step toward machines that don't just generate plausible text, but that genuinely reason — systems more reliable, more interpretable, and more aligned with how we'd want a thoughtful agent to behave.</p>
+            <p data-i18n="vision.p2">Our goal is ambitious: to build AI systems that truly understand the structure of valid reasoning, that can detect when thinking goes astray, and that can guide themselves back toward coherent solutions. This is a step toward machines that don't just generate plausible text, but that genuinely reason — systems more reliable, more interpretable, and more aligned with how we'd want a thoughtful agent to behave.</p>
 
             <a href="/" class="back-link">
                 <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
-                Back to Home
+                <span data-i18n="backToHome">Back to Home</span>
             </a>
         </div>
     </section>
 
     <footer>
-        <p>&copy; 2025 <a href="https://github.com/Teleadmin-ai">Teleadmin</a>. Created by Romain Provencal.</p>
+        <p data-i18n="footer.copyright">&copy; 2025 <a href="https://github.com/Teleadmin-ai">Teleadmin</a>. Created by Romain Provencal.</p>
     </footer>
+
+    <script>
+        // Translations for About page
+        const translations = {
+            en: {
+                // Navigation
+                "nav.home": "Home",
+                "nav.problem": "The Problem",
+                "nav.approach": "Our Approach",
+                "nav.modes": "How It Helps",
+
+                // Hero
+                "hero.title": "Understanding R-JEPA",
+                "hero.subtitle": "What it does, why it matters, and how it works — in plain language",
+
+                // Problem Section
+                "problem.title": "The Problem We're Solving",
+                "problem.p1": "Large language models are remarkably capable, but they have a curious weakness: they don't really <em>think</em> about what they're saying. When a model solves a math problem or writes code, it's essentially predicting the next word based on patterns it learned during training. There's no internal voice checking if the reasoning makes sense.",
+                "problem.p2": "This leads to a familiar frustration. The model confidently writes \"Step 1... Step 2... Step 3...\" — and the final answer is wrong. Not because the model lacks knowledge, but because somewhere in the middle, a reasoning step went off track, and nothing caught it.",
+                "problem.p3": "What if we could give the model a way to <strong>sense when its reasoning drifts</strong>? Not by adding more rules, but by teaching it what good reasoning <em>feels like</em> at a deeper level?",
+
+                // Approach Section
+                "approach.title": "Our Approach: Learning the Shape of Good Reasoning",
+                "approach.p1": "R-JEPA takes a different approach from traditional methods. Instead of looking at the words a model produces, we look at its <strong>internal representations</strong> — the hidden patterns of activation inside the neural network as it thinks through each step.",
+                "approach.p2": "These internal states, which we call \"latents,\" are like a fingerprint of what the model is actually computing at each moment. A correct reasoning step has a certain shape in this latent space. An incorrect one looks different.",
+                "approach.analogy.title": "An Analogy",
+                "approach.analogy.p1": "Imagine watching someone solve a puzzle. You can't see their thoughts, but you notice their hand movements. Someone who knows what they're doing moves with a certain rhythm — confident, directed, purposeful. Someone who's confused hesitates, backtracks, fumbles.",
+                "approach.analogy.p2": "R-JEPA learns to recognize this rhythm, but in the space of neural activations. It learns what the \"confident, directed, purposeful\" pattern looks like for correct mathematical reasoning, logical deduction, or code writing.",
+                "approach.p3": "The key insight, borrowed from Yann LeCun's work on world models, is that we don't need to predict the actual words. We just need to predict what the <strong>internal state should be</strong> if the reasoning is proceeding correctly. When the actual state diverges from the expected state, something has gone wrong.",
+
+                // Pipeline Section
+                "pipeline.title": "How It Works — The Pipeline",
+                "pipeline.caption": "<b>The R-JEPA Pipeline:</b> A problem enters the LLM which generates step-by-step reasoning. Each step's hidden state (4096-dim vector from layer -2) is extracted. R-JEPA's Context Encoder + Predictor learn to predict the next latent (ẑ₃) from visible context (h₁, h₂). The Target Encoder (EMA) provides the ground truth (z₃). Low L1 loss = coherent reasoning. High loss = potential error detected.",
+
+                // Modes Section
+                "modes.title": "Three Ways R-JEPA Helps",
+                "modes.rerank.title": "🎯 RERANK — Picking the Best Answer",
+                "modes.rerank.p1": "The simplest use case. We ask the language model to generate several different solutions to the same problem. Then R-JEPA scores each one based on how \"coherent\" the reasoning looks in latent space.",
+                "modes.rerank.p2": "A solution where each step flows naturally from the previous one will score better than a solution with logical jumps or inconsistencies — even if both arrive at an answer. This doesn't guarantee correctness, but it significantly improves the odds of picking a good solution.",
+                "modes.nudge.title": "🔄 NUDGE — Gentle Course Correction",
+                "modes.nudge.p1": "This is more subtle. Instead of just scoring complete solutions, R-JEPA can influence the model <em>while it's generating</em>. At each step, it predicts what a good next state should look like, then gently biases the model's word choices toward that target.",
+                "modes.nudge.p2": "Think of it like a GPS that doesn't just tell you when you've arrived at the wrong destination — it notices when you're about to take a wrong turn and suggests a correction before you commit to it.",
+                "modes.nudge.p3": "The bias is gentle (adjustable from subtle to strong), so the model can still follow its intuition while being guided toward more coherent reasoning paths.",
+                "modes.plan.title": "📝 PLAN — Filling in the Gaps",
+                "modes.plan.p1": "Sometimes a model skips steps. It might jump from \"we need to solve for x\" to \"therefore x = 4\" without showing the work. R-JEPA can detect these gaps by noticing that the latent space jumped unexpectedly.",
+                "modes.plan.p2": "More importantly, it can predict what the missing steps <em>should</em> look like, and translate those predictions back into text. This helps produce more complete, verifiable reasoning chains.",
+
+                // Models Section
+                "models.title": "Working with Different Models",
+                "models.p1": "One practical concern: does this only work with one specific language model? Not quite. The latent space of different models in the same family (like Qwen 8B and Qwen 32B) have similar structures. We can train R-JEPA on a smaller model and then adapt it to work with larger ones through a brief calibration process.",
+                "models.p2": "This means you can develop and test on accessible hardware, then deploy with more powerful models when needed, without starting from scratch.",
+
+                // Limitations Section
+                "limitations.title": "What This Isn't",
+                "limitations.p1": "R-JEPA is not a magic solution. It can't make a model understand concepts it never learned. It can't guarantee correct answers. It's not a replacement for careful prompt engineering or domain-specific fine-tuning.",
+                "limitations.p2": "What it offers is a <strong>new lens</strong> on the reasoning process — a way to evaluate and guide model outputs that goes beyond just looking at the words. Think of it as adding a layer of introspection to systems that otherwise operate on pure pattern matching.",
+
+                // Vision Section
+                "vision.title": "The Bigger Picture",
+                "vision.p1": "This project embodies a fundamental conviction: AI systems need an internal model of what they're doing, not just pattern matching on outputs. The V-JEPA approach from Meta AI demonstrated this was possible for video — predicting what should happen next in a scene by understanding the underlying dynamics. R-JEPA applies this same principle to reasoning in text.",
+                "vision.p2": "Our goal is ambitious: to build AI systems that truly understand the structure of valid reasoning, that can detect when thinking goes astray, and that can guide themselves back toward coherent solutions. This is a step toward machines that don't just generate plausible text, but that genuinely reason — systems more reliable, more interpretable, and more aligned with how we'd want a thoughtful agent to behave.",
+
+                // Footer
+                "backToHome": "Back to Home",
+                "footer.copyright": "&copy; 2025 <a href=\"https://github.com/Teleadmin-ai\">Teleadmin</a>. Created by Romain Provencal."
+            },
+            fr: {
+                // Navigation
+                "nav.home": "Accueil",
+                "nav.problem": "Le Problème",
+                "nav.approach": "Notre Approche",
+                "nav.modes": "Comment ça aide",
+
+                // Hero
+                "hero.title": "Comprendre R-JEPA",
+                "hero.subtitle": "Ce qu'il fait, pourquoi c'est important, et comment ça marche — en langage simple",
+
+                // Problem Section
+                "problem.title": "Le Problème Que Nous Résolvons",
+                "problem.p1": "Les grands modèles de langage sont remarquablement capables, mais ils ont une faiblesse curieuse : ils ne <em>réfléchissent</em> pas vraiment à ce qu'ils disent. Quand un modèle résout un problème de maths ou écrit du code, il prédit essentiellement le prochain mot basé sur des patterns appris pendant l'entraînement. Il n'y a pas de voix interne qui vérifie si le raisonnement a du sens.",
+                "problem.p2": "Cela conduit à une frustration familière. Le modèle écrit avec confiance « Étape 1... Étape 2... Étape 3... » — et la réponse finale est fausse. Non pas parce que le modèle manque de connaissances, mais parce que quelque part au milieu, une étape de raisonnement a dévié, et rien ne l'a détecté.",
+                "problem.p3": "Et si nous pouvions donner au modèle un moyen de <strong>sentir quand son raisonnement dérive</strong> ? Non pas en ajoutant plus de règles, mais en lui apprenant ce que ressemble un bon raisonnement à un niveau plus profond.",
+
+                // Approach Section
+                "approach.title": "Notre Approche : Apprendre la Forme du Bon Raisonnement",
+                "approach.p1": "R-JEPA adopte une approche différente des méthodes traditionnelles. Au lieu de regarder les mots qu'un modèle produit, nous regardons ses <strong>représentations internes</strong> — les patterns cachés d'activation à l'intérieur du réseau neuronal pendant qu'il réfléchit à chaque étape.",
+                "approach.p2": "Ces états internes, que nous appelons « latents », sont comme une empreinte digitale de ce que le modèle calcule réellement à chaque instant. Une étape de raisonnement correcte a une certaine forme dans cet espace latent. Une incorrecte est différente.",
+                "approach.analogy.title": "Une Analogie",
+                "approach.analogy.p1": "Imaginez regarder quelqu'un résoudre un puzzle. Vous ne pouvez pas voir ses pensées, mais vous remarquez ses mouvements de main. Quelqu'un qui sait ce qu'il fait bouge avec un certain rythme — confiant, dirigé, délibéré. Quelqu'un qui est confus hésite, revient en arrière, tâtonne.",
+                "approach.analogy.p2": "R-JEPA apprend à reconnaître ce rythme, mais dans l'espace des activations neuronales. Il apprend à quoi ressemble le pattern « confiant, dirigé, délibéré » pour un raisonnement mathématique correct, une déduction logique, ou l'écriture de code.",
+                "approach.p3": "L'intuition clé, empruntée aux travaux de Yann LeCun sur les world models, est que nous n'avons pas besoin de prédire les mots réels. Nous devons juste prédire ce que <strong>l'état interne devrait être</strong> si le raisonnement se déroule correctement. Quand l'état réel diverge de l'état attendu, quelque chose s'est mal passé.",
+
+                // Pipeline Section
+                "pipeline.title": "Comment Ça Marche — Le Pipeline",
+                "pipeline.caption": "<b>Le Pipeline R-JEPA :</b> Un problème entre dans le LLM qui génère un raisonnement étape par étape. L'état caché de chaque étape (vecteur 4096-dim de la couche -2) est extrait. L'Encoder de Contexte + Prédicteur de R-JEPA apprennent à prédire le prochain latent (ẑ₃) à partir du contexte visible (h₁, h₂). L'Encoder Cible (EMA) fournit la vérité terrain (z₃). Faible perte L1 = raisonnement cohérent. Perte élevée = erreur potentielle détectée.",
+
+                // Modes Section
+                "modes.title": "Trois Façons Dont R-JEPA Aide",
+                "modes.rerank.title": "🎯 RERANK — Choisir la Meilleure Réponse",
+                "modes.rerank.p1": "Le cas d'utilisation le plus simple. Nous demandons au modèle de langage de générer plusieurs solutions différentes au même problème. Puis R-JEPA note chacune selon à quel point le raisonnement semble « cohérent » dans l'espace latent.",
+                "modes.rerank.p2": "Une solution où chaque étape découle naturellement de la précédente aura un meilleur score qu'une solution avec des sauts logiques ou des incohérences — même si les deux arrivent à une réponse. Cela ne garantit pas la correction, mais améliore significativement les chances de choisir une bonne solution.",
+                "modes.nudge.title": "🔄 NUDGE — Correction de Trajectoire Douce",
+                "modes.nudge.p1": "C'est plus subtil. Au lieu de juste noter des solutions complètes, R-JEPA peut influencer le modèle <em>pendant qu'il génère</em>. À chaque étape, il prédit à quoi devrait ressembler le prochain bon état, puis biaise doucement les choix de mots du modèle vers cette cible.",
+                "modes.nudge.p2": "Pensez-y comme un GPS qui ne vous dit pas juste quand vous êtes arrivé à la mauvaise destination — il remarque quand vous êtes sur le point de prendre un mauvais virage et suggère une correction avant que vous ne vous y engagiez.",
+                "modes.nudge.p3": "Le biais est doux (ajustable de subtil à fort), donc le modèle peut toujours suivre son intuition tout en étant guidé vers des chemins de raisonnement plus cohérents.",
+                "modes.plan.title": "📝 PLAN — Combler les Lacunes",
+                "modes.plan.p1": "Parfois un modèle saute des étapes. Il peut passer de « nous devons résoudre x » à « donc x = 4 » sans montrer le travail. R-JEPA peut détecter ces lacunes en remarquant que l'espace latent a sauté de manière inattendue.",
+                "modes.plan.p2": "Plus important encore, il peut prédire à quoi les étapes manquantes <em>devraient</em> ressembler, et traduire ces prédictions en texte. Cela aide à produire des chaînes de raisonnement plus complètes et vérifiables.",
+
+                // Models Section
+                "models.title": "Travailler avec Différents Modèles",
+                "models.p1": "Une préoccupation pratique : est-ce que cela fonctionne seulement avec un modèle de langage spécifique ? Pas tout à fait. L'espace latent de différents modèles de la même famille (comme Qwen 8B et Qwen 32B) ont des structures similaires. Nous pouvons entraîner R-JEPA sur un modèle plus petit puis l'adapter pour fonctionner avec des modèles plus grands via un bref processus de calibration.",
+                "models.p2": "Cela signifie que vous pouvez développer et tester sur du matériel accessible, puis déployer avec des modèles plus puissants quand nécessaire, sans repartir de zéro.",
+
+                // Limitations Section
+                "limitations.title": "Ce Que Ce N'Est Pas",
+                "limitations.p1": "R-JEPA n'est pas une solution magique. Il ne peut pas faire comprendre à un modèle des concepts qu'il n'a jamais appris. Il ne peut pas garantir des réponses correctes. Ce n'est pas un remplacement pour un prompt engineering soigné ou un fine-tuning spécifique au domaine.",
+                "limitations.p2": "Ce qu'il offre est une <strong>nouvelle perspective</strong> sur le processus de raisonnement — une façon d'évaluer et guider les sorties du modèle qui va au-delà de simplement regarder les mots. Pensez-y comme ajouter une couche d'introspection à des systèmes qui autrement opèrent sur du simple pattern matching.",
+
+                // Vision Section
+                "vision.title": "La Vision Globale",
+                "vision.p1": "Ce projet incarne une conviction fondamentale : les systèmes d'IA ont besoin d'un modèle interne de ce qu'ils font, pas juste du pattern matching sur les sorties. L'approche V-JEPA de Meta AI a démontré que c'était possible pour la vidéo — prédire ce qui devrait se passer ensuite dans une scène en comprenant la dynamique sous-jacente. R-JEPA applique ce même principe au raisonnement textuel.",
+                "vision.p2": "Notre objectif est ambitieux : construire des systèmes d'IA qui comprennent vraiment la structure du raisonnement valide, qui peuvent détecter quand la pensée dévie, et qui peuvent se guider eux-mêmes vers des solutions cohérentes. C'est un pas vers des machines qui ne font pas que générer du texte plausible, mais qui raisonnent véritablement — des systèmes plus fiables, plus interprétables, et plus alignés avec comment nous voudrions qu'un agent réfléchi se comporte.",
+
+                // Footer
+                "backToHome": "Retour à l'Accueil",
+                "footer.copyright": "&copy; 2025 <a href=\"https://github.com/Teleadmin-ai\">Teleadmin</a>. Créé par Romain Provencal."
+            }
+        };
+
+        // Apply translations
+        function setLanguage(lang) {
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (translations[lang] && translations[lang][key]) {
+                    el.innerHTML = translations[lang][key];
+                }
+            });
+
+            // Update active button
+            document.querySelectorAll('.lang-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.lang === lang);
+            });
+
+            // Save preference
+            localStorage.setItem('rjepa-lang', lang);
+
+            // Update HTML lang attribute
+            document.documentElement.lang = lang;
+        }
+
+        // Initialize language
+        document.addEventListener('DOMContentLoaded', () => {
+            // Get saved language or detect from browser
+            const savedLang = localStorage.getItem('rjepa-lang');
+            const browserLang = navigator.language.startsWith('fr') ? 'fr' : 'en';
+            const initialLang = savedLang || browserLang;
+
+            setLanguage(initialLang);
+
+            // Add click handlers
+            document.querySelectorAll('.lang-btn').forEach(btn => {
+                btn.addEventListener('click', () => setLanguage(btn.dataset.lang));
+            });
+        });
+    </script>
 </body>
 </html>
