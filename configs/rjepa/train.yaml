@@ -36,8 +36,8 @@ masker:
 
 # Data paths
 data:
-  train_latents_dir: "data/latents/qwen3-8b/academic_shards"
-  val_latents_dir: "data/latents/qwen3-8b/academic_shards"
+  train_latents_dir: "data/latents/qwen3-8b/academic"
+  val_latents_dir: "data/latents/qwen3-8b/academic"
 
 # Training configuration
 training:

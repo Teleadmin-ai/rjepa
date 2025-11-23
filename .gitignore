@@ -82,3 +82,4 @@ CLAUDE.md
 configs/rjepa/train.yaml
 scripts/retrain_from_feedback.py
 rjepa/pipeline/continuous_learning.py
+legacy-vjepa2/
