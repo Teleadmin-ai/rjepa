@@ -1,7 +1,6 @@
 # Copyright (c) Meta Platforms, Inc. and affiliates.
-# All rights reserved.
 #
-# This source code is licensed under the license found in the
+# This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 #
 # ADAPTED FOR R-JEPA: Complete Reasoning JEPA model
@@ -41,6 +40,7 @@ class ReasoningJEPA(nn.Module):
         qk_scale=None,
         drop_rate=0.0,
         attn_drop_rate=0.0,
+        drop_path_rate=0.0,  # V-JEPA 2: Stochastic depth rate
         norm_layer=nn.LayerNorm,
         init_std=0.02,
         use_mask_tokens=False,
@@ -74,6 +74,7 @@ class ReasoningJEPA(nn.Module):
             qk_scale=qk_scale,
             drop_rate=drop_rate,
             attn_drop_rate=attn_drop_rate,
+            drop_path_rate=drop_path_rate,  # V-JEPA 2: Stochastic depth
             norm_layer=norm_layer,
             init_std=init_std,
         )
@@ -93,6 +94,7 @@ class ReasoningJEPA(nn.Module):
             qk_scale=qk_scale,
             drop_rate=drop_rate,
             attn_drop_rate=attn_drop_rate,
+            drop_path_rate=drop_path_rate,  # V-JEPA 2: Stochastic depth
             norm_layer=norm_layer,
             init_std=init_std,
             use_mask_tokens=use_mask_tokens,
@@ -220,6 +222,7 @@ def create_rjepa_model(config):
     - predictor_dim -> predictor_embed_dim
     - depth_predictor -> predictor_depth
     - num_heads -> encoder_num_heads & predictor_num_heads
+    - drop_path_rate -> drop_path_rate (V-JEPA 2 stochastic depth)
     """
     return ReasoningJEPA(
         input_dim=config.get('dim', 4096),
@@ -232,6 +235,7 @@ def create_rjepa_model(config):
         predictor_num_heads=config.get('num_heads', 16),
         mlp_ratio=config.get('mlp_ratio', 4.0),
         drop_rate=config.get('dropout', 0.0),
+        drop_path_rate=config.get('drop_path_rate', 0.0),  # V-JEPA 2: Stochastic depth
         ema_momentum=config.get('ema_momentum', 0.996),
     )
 

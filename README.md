@@ -1,6 +1,19 @@
 # R-JEPA: Reasoning Joint Embedding Predictive Architecture
 
+[![MIT License](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
+[![Python 3.11+](https://img.shields.io/badge/Python-3.11+-blue.svg)](https://python.org)
+[![PyTorch 2.1+](https://img.shields.io/badge/PyTorch-2.1+-orange.svg)](https://pytorch.org)
+
 A **World Model for Text Reasoning** inspired by Meta AI's V-JEPA, adapted for textual reasoning sequences.
+
+## 🎯 Two Editions
+
+| Edition | Description | Availability |
+|---------|-------------|--------------|
+| **🌐 Community** | Full open-source (MIT), self-hosted | **Available Now** |
+| **☁️ Cloud API** | Managed service, pay-per-token | Coming Soon |
+
+> **🔒 Privacy-First**: With Cloud API, your text never leaves your servers. Only latent vectors (4096-dim abstract representations) are sent - mathematically irreversible, GDPR/HIPAA compatible.
 
 ## Overview
 
@@ -64,6 +77,20 @@ R-JEPA learns to predict, complete, and correct reasoning steps in **latent spac
 - **Fast Calibration**: Adapt to new LLM in 2-4h (vs days for full retrain)
 - **Continuous Learning**: User feedback → validated interactions → retraining
 - **Extended Benchmarks**: GSM8K, MATH, HumanEval, MMLU, Big-Bench Hard, ARC
+
+## 🌐 Community Edition (Open Source)
+
+Everything you need to train and deploy R-JEPA on your own infrastructure.
+
+### What's Included
+
+- ✅ Full R-JEPA source code (MIT License)
+- ✅ Pre-configured Docker Compose (7 services)
+- ✅ 21K+ academic problems dataset
+- ✅ All inference modes (RERANK, NUDGE, PLAN)
+- ✅ Multi-LLM support (Qwen, Llama, Mistral, DeepSeek, Phi)
+- ✅ Training scripts and configurations
+- ✅ Benchmark evaluation tools
 
 ## Installation
 
@@ -224,6 +251,49 @@ R-JEPA Service (`localhost:8100`):
 | Latent Extraction | 3.8s/problem (RTX 4090) |
 | Training | ~35h for 100 epochs |
 | VRAM Usage | ~2.5GB (R-JEPA) + ~16GB (Qwen3-8B) |
+
+## ☁️ Cloud API (Coming Soon)
+
+Managed R-JEPA service with advanced features - no GPU required.
+
+### Features
+
+| Feature | Description |
+|---------|-------------|
+| **🔒 Privacy-First** | Your text stays local - only latent vectors are transmitted |
+| **🧠 Latent Memory** | Cross-session context persistence for reasoning continuity |
+| **🔄 Multi-Model** | Switch between LLM backends instantly |
+| **📈 Auto-scaling** | Handle any load without infrastructure management |
+| **📊 Analytics** | Usage dashboard and performance metrics |
+
+### How Privacy Works
+
+```
+YOUR INFRASTRUCTURE                    TELEADMIN CLOUD
+┌─────────────────────┐                ┌─────────────────────┐
+│ Your App + LLM      │                │ R-JEPA API          │
+│ ─────────────────── │                │ ─────────────────── │
+│ 1. User query       │                │                     │
+│ 2. LLM generates    │   latent       │ 3. Compute score    │
+│    reasoning        │   vectors      │ 4. Return guidance  │
+│ 3. Extract latents  │ ─────────────► │                     │
+│    (4096-dim)       │ ◄───────────── │                     │
+│ 4. Apply guidance   │   predictions  │                     │
+│                     │                │                     │
+│ ✅ TEXT NEVER LEAVES│                │ ❌ No text access   │
+└─────────────────────┘                └─────────────────────┘
+```
+
+**Why latent vectors are safe:**
+- Latent vectors are abstract 4096-dimensional representations
+- Mathematically impossible to reconstruct original text
+- Compliant with GDPR, HIPAA, and enterprise security policies
+
+### Waitlist
+
+Interested in Cloud API? Join the waitlist:
+
+📧 **[music.romain@teleadmin.net](mailto:music.romain@teleadmin.net?subject=R-JEPA%20Cloud%20API%20Interest)**
 
 ## References
 

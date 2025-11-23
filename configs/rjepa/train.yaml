@@ -12,6 +12,7 @@ model:
   predictor_dim: 1024  # Predictor internal dimension (ORIGINAL)
   mlp_ratio: 4.0  # MLP expansion ratio (ORIGINAL)
   dropout: 0.0  # Dropout (0.0 for deterministic training)
+  drop_path_rate: 0.1  # V-JEPA 2: Stochastic depth rate (0.0 to disable, 0.1 recommended)
   max_steps: 512  # Maximum sequence length
   domain_embed_dim: 64  # Domain embedding dimension (ORIGINAL)
   num_domains: 50  # Number of domain classes

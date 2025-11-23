@@ -47,7 +47,7 @@
             "name": "Romain Provencal"
         },
         "codeRepository": "https://github.com/Teleadmin-ai/rjepa",
-        "license": "https://creativecommons.org/licenses/by-nc/4.0/",
+        "license": "https://opensource.org/licenses/MIT",
         "programmingLanguage": "Python",
         "offers": {
             "@type": "Offer",
@@ -577,9 +577,151 @@
             color: #0ea5e9;
         }
 
+        .status-coming {
+            background: rgba(245, 158, 11, 0.2);
+            color: #f59e0b;
+        }
+
         .mode-card p {
             color: var(--text-muted);
             line-height: 1.7;
+        }
+
+        /* Pricing Section */
+        .pricing {
+            padding: 100px 0;
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(14, 165, 233, 0.05) 100%);
+        }
+
+        .pricing h2 {
+            text-align: center;
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+        }
+
+        .pricing .section-subtitle {
+            text-align: center;
+            color: var(--text-muted);
+            max-width: 700px;
+            margin: 0 auto 60px;
+        }
+
+        .pricing-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 30px;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .pricing-card {
+            background: var(--bg-card);
+            padding: 40px;
+            border-radius: 20px;
+            border: 2px solid rgba(255,255,255,0.05);
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .pricing-card.featured {
+            border-color: var(--primary);
+            transform: scale(1.02);
+        }
+
+        .pricing-card.featured::before {
+            content: 'Coming Soon';
+            position: absolute;
+            top: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            padding: 6px 20px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .pricing-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .pricing-card.featured:hover {
+            transform: scale(1.02) translateY(-5px);
+        }
+
+        .pricing-card h3 {
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .pricing-card .price {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--accent);
+            margin-bottom: 20px;
+        }
+
+        .pricing-card .price span {
+            font-size: 1rem;
+            color: var(--text-muted);
+            font-weight: 400;
+        }
+
+        .pricing-card ul {
+            list-style: none;
+            margin-bottom: 30px;
+        }
+
+        .pricing-card li {
+            padding: 10px 0;
+            color: var(--text-muted);
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+        }
+
+        .pricing-card li::before {
+            content: '✓';
+            color: var(--success);
+            font-weight: bold;
+        }
+
+        .pricing-card .btn {
+            width: 100%;
+            justify-content: center;
+        }
+
+        .privacy-note {
+            margin-top: 40px;
+            padding: 30px;
+            background: var(--bg-card);
+            border-radius: 16px;
+            border-left: 4px solid var(--success);
+            max-width: 900px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .privacy-note h4 {
+            color: var(--success);
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .privacy-note p {
+            color: var(--text-muted);
+            line-height: 1.8;
+        }
+
+        .privacy-note strong {
+            color: var(--text);
         }
 
         /* Research Section */
@@ -765,8 +907,8 @@
                     <li><a href="about.html">About</a></li>
                     <li><a href="#how-it-works">How It Works</a></li>
                     <li><a href="#features">Features</a></li>
+                    <li><a href="#pricing">Pricing</a></li>
                     <li><a href="#modes">Inference</a></li>
-                    <li><a href="#research">Research</a></li>
                     <li><a href="https://github.com/Teleadmin-ai/rjepa">GitHub</a></li>
                 </ul>
             </nav>
@@ -859,6 +1001,59 @@
                     <h3>Containerized Deployment</h3>
                     <p>7 Docker services via docker-compose: student-llm, rjepa-service, teacher-orch, data-pipeline, prefect-server, ui-backend, ui-frontend.</p>
                 </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="pricing" id="pricing">
+        <div class="container">
+            <h2>Choose Your Plan</h2>
+            <p class="section-subtitle">Full open-source flexibility or managed cloud service with advanced features. Your data stays private either way.</p>
+            <div class="pricing-grid">
+                <div class="pricing-card">
+                    <h3>🌐 Community Edition</h3>
+                    <div class="price">Free <span>/ forever</span></div>
+                    <ul>
+                        <li>Full R-JEPA source code (MIT License)</li>
+                        <li>Train your own models on your hardware</li>
+                        <li>All inference modes: RERANK, NUDGE, PLAN</li>
+                        <li>Docker Compose deployment (7 services)</li>
+                        <li>21K+ academic problems dataset</li>
+                        <li>Multi-LLM support (Qwen, Llama, Mistral...)</li>
+                        <li>Community support via GitHub</li>
+                    </ul>
+                    <a href="https://github.com/Teleadmin-ai/rjepa" class="btn btn-secondary">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+                        Get Started Free
+                    </a>
+                </div>
+                <div class="pricing-card featured">
+                    <h3>☁️ Cloud API</h3>
+                    <div class="price">Pay-per-use <span>/ token</span></div>
+                    <ul>
+                        <li>Pre-trained checkpoints (no GPU required)</li>
+                        <li>REST API: /score, /predict, /nudge</li>
+                        <li><strong>Latent Memory</strong>: Cross-session context persistence</li>
+                        <li><strong>Multi-Model</strong>: Switch LLM backends instantly</li>
+                        <li><strong>Auto-scaling</strong>: Handle any load</li>
+                        <li>Priority support & SLA guarantee</li>
+                        <li>Usage dashboard & analytics</li>
+                    </ul>
+                    <a href="mailto:music.romain@teleadmin.net?subject=R-JEPA Cloud API Interest" class="btn btn-primary">
+                        Join Waitlist
+                    </a>
+                </div>
+            </div>
+            <div class="privacy-note">
+                <h4>🔒 Privacy-First Architecture</h4>
+                <p>
+                    With R-JEPA Cloud, <strong>your text data never leaves your infrastructure</strong>. Here's how it works:<br><br>
+                    1. You extract latent vectors locally from your LLM (4096-dim abstract representations)<br>
+                    2. Only these <strong>latent vectors</strong> are sent to our API (not your text!)<br>
+                    3. We return guidance scores or predicted latents<br><br>
+                    Latent vectors are <strong>mathematically irreversible</strong> - it's impossible to reconstruct the original text from them.
+                    This makes R-JEPA Cloud compatible with <strong>GDPR, HIPAA, and enterprise security requirements</strong>.
+                </p>
             </div>
         </div>
     </section>
@@ -1035,10 +1230,11 @@
                     </ul>
                 </div>
                 <div class="footer-links">
-                    <h4>Legal</h4>
+                    <h4>Legal & Contact</h4>
                     <ul>
-                        <li><a href="https://github.com/Teleadmin-ai/rjepa/blob/main/LICENSE">License (CC BY-NC 4.0)</a></li>
+                        <li><a href="https://github.com/Teleadmin-ai/rjepa/blob/main/LICENSE">License (MIT)</a></li>
                         <li><a href="mailto:music.romain@teleadmin.net">Contact</a></li>
+                        <li><a href="mailto:music.romain@teleadmin.net?subject=R-JEPA Cloud API">Cloud API Waitlist</a></li>
                     </ul>
                 </div>
             </div>

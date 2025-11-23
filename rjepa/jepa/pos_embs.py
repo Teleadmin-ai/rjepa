@@ -1,70 +1,54 @@
 # Copyright (c) Meta Platforms, Inc. and affiliates.
-# All rights reserved.
 #
-# This source code is licensed under the license found in the
+# This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 #
 # ADAPTED FOR R-JEPA: 1D sinusoidal positional embeddings for reasoning steps
+# V-JEPA 2 already includes get_1d_sincos_pos_embed, we use the same implementation.
 
-import math
 import numpy as np
-import torch
 
 
-def get_1d_sincos_pos_embed(embed_dim, length):
+def get_1d_sincos_pos_embed(embed_dim: int, seq_len: int, cls_token: bool = False):
     """
     Generate 1D sinusoidal positional embeddings for sequence of steps.
 
-    Adapted from V-JEPA's get_2d_sincos_pos_embed for 1D sequences.
+    This is the V-JEPA 2 implementation for 1D sequences.
 
     Args:
-        embed_dim: embedding dimension
-        length: number of steps in sequence
+        embed_dim: output dimension for each position
+        seq_len: int of the sequence length (number of reasoning steps)
+        cls_token: if True, prepend a zero vector for CLS token
 
     Returns:
-        pos_embed: [length, embed_dim] positional embedding
+        pos_embed: [seq_len, embed_dim] or [1 + seq_len, embed_dim] if cls_token
     """
-    assert embed_dim % 2 == 0, "embed_dim must be even for sin/cos encoding"
-
-    # Position indices
-    pos = np.arange(length, dtype=np.float32)
-
-    # Frequency bands
-    omega = np.arange(embed_dim // 2, dtype=np.float32)
-    omega /= embed_dim / 2.
-    omega = 1. / 10000**omega  # (embed_dim/2,)
-
-    # Outer product: [length, embed_dim/2]
-    out = np.einsum('l,d->ld', pos, omega)
-
-    # Sin and cos
-    emb_sin = np.sin(out)  # [length, embed_dim/2]
-    emb_cos = np.cos(out)  # [length, embed_dim/2]
-
-    # Concatenate
-    pos_embed = np.concatenate([emb_sin, emb_cos], axis=1)  # [length, embed_dim]
-
+    grid = np.arange(seq_len, dtype=float)
+    pos_embed = get_1d_sincos_pos_embed_from_grid(embed_dim, grid)
+    if cls_token:
+        pos_embed = np.concatenate([np.zeros([1, embed_dim]), pos_embed], axis=0)
     return pos_embed
 
 
-def get_1d_sincos_pos_embed_from_grid(embed_dim, pos):
+def get_1d_sincos_pos_embed_from_grid(embed_dim: int, pos: np.ndarray):
     """
     Generate positional embedding from explicit positions.
 
     Args:
         embed_dim: output dimension for each position
-        pos: a list of positions to be encoded: size (M,)
+        pos: array of positions [M,]
 
     Returns:
         pos_embed: [M, embed_dim]
     """
-    assert embed_dim % 2 == 0
+    assert embed_dim % 2 == 0, "embed_dim must be even for sin/cos encoding"
 
-    omega = np.arange(embed_dim // 2, dtype=np.float32)
-    omega /= embed_dim / 2.
-    omega = 1. / 10000**omega  # (D/2,)
+    omega = np.arange(embed_dim // 2, dtype=float)
+    omega /= embed_dim / 2.0
+    omega = 1.0 / 10000**omega  # (D/2,)
 
-    out = np.einsum('m,d->md', pos, omega)  # (M, D/2), outer product
+    pos = pos.reshape(-1)
+    out = np.einsum("m,d->md", pos, omega)  # (M, D/2), outer product
 
     emb_sin = np.sin(out)  # (M, D/2)
     emb_cos = np.cos(out)  # (M, D/2)

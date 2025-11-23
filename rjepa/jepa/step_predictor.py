@@ -1,11 +1,10 @@
 # Copyright (c) Meta Platforms, Inc. and affiliates.
-# All rights reserved.
 #
-# This source code is licensed under the license found in the
+# This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 #
 # ADAPTED FOR R-JEPA: VisionTransformerPredictor → StepPredictor
-# Adapts V-JEPA's predictor from 2D/3D patches to 1D reasoning step sequences
+# Adapts V-JEPA 2's predictor from 2D/3D patches to 1D reasoning step sequences
 
 import math
 from functools import partial
@@ -19,15 +18,13 @@ from rjepa.jepa.vjepa_adapted.utils import apply_masks
 
 
 def trunc_normal_(tensor, mean=0., std=1.):
-    """Truncated normal initialization (from V-JEPA)"""
-    with torch.no_grad():
-        size = tensor.shape
-        tmp = tensor.new_empty(size + (4,)).normal_()
-        valid = (tmp < 2) & (tmp > -2)
-        ind = valid.max(-1, keepdim=True)[1]
-        tensor.data.copy_(tmp.gather(-1, ind).squeeze(-1))
-        tensor.data.mul_(std).add_(mean)
-        return tensor
+    """
+    Truncated normal initialization.
+
+    CRITICAL FIX: Use PyTorch's built-in trunc_normal_ to avoid GIL issues.
+    The custom implementation had threading problems on Windows.
+    """
+    return torch.nn.init.trunc_normal_(tensor, mean=mean, std=std, a=-2.0, b=2.0)
 
 
 def repeat_interleave_batch(x, B, repeat):
@@ -83,6 +80,7 @@ class StepPredictor(nn.Module):
         qk_scale=None,           # Manual scale for QK attention
         drop_rate=0.0,           # Dropout rate
         attn_drop_rate=0.0,      # Attention dropout rate
+        drop_path_rate=0.0,      # Stochastic depth rate (V-JEPA 2)
         norm_layer=nn.LayerNorm,
         init_std=0.02,           # Weight initialization std
         use_mask_tokens=False,   # Use learnable mask tokens vs diffusion
@@ -116,7 +114,10 @@ class StepPredictor(nn.Module):
             requires_grad=False
         )
 
-        # Transformer blocks (identical to V-JEPA)
+        # Stochastic depth decay rule (V-JEPA 2)
+        dpr = [x.item() for x in torch.linspace(0, drop_path_rate, depth)]
+
+        # Transformer blocks (V-JEPA 2 style with DropPath)
         self.predictor_blocks = nn.ModuleList([
             Block(
                 dim=predictor_dim,
@@ -126,6 +127,7 @@ class StepPredictor(nn.Module):
                 qk_scale=qk_scale,
                 drop=drop_rate,
                 attn_drop=attn_drop_rate,
+                drop_path=dpr[i],    # V-JEPA 2: stochastic depth
                 norm_layer=norm_layer,
                 grid_size=None,      # Not used for 1D
                 grid_depth=None,     # Not used for 1D

@@ -1,11 +1,10 @@
 # Copyright (c) Meta Platforms, Inc. and affiliates.
-# All rights reserved.
 #
-# This source code is licensed under the license found in the
+# This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 #
 # ADAPTED FOR R-JEPA: Vision Transformer → Step Transformer
-# Adapts V-JEPA's encoder from 2D/3D patches to 1D reasoning step sequences
+# Adapts V-JEPA 2's encoder from 2D/3D patches to 1D reasoning step sequences
 
 import math
 from functools import partial
@@ -55,6 +54,7 @@ class StepTransformer(nn.Module):
         qk_scale=None,           # Manual scale for QK attention
         drop_rate=0.0,           # Dropout rate
         attn_drop_rate=0.0,      # Attention dropout rate
+        drop_path_rate=0.0,      # Stochastic depth rate (V-JEPA 2)
         norm_layer=nn.LayerNorm,
         init_std=0.02,           # Weight initialization std
         out_layers=None,         # Which layers to output (for multi-scale)
@@ -77,7 +77,10 @@ class StepTransformer(nn.Module):
             requires_grad=False
         )
 
-        # Transformer blocks (identical to V-JEPA)
+        # Stochastic depth decay rule (V-JEPA 2)
+        dpr = [x.item() for x in torch.linspace(0, drop_path_rate, depth)]
+
+        # Transformer blocks (V-JEPA 2 style with DropPath)
         self.blocks = nn.ModuleList([
             Block(
                 dim=embed_dim,
@@ -87,6 +90,7 @@ class StepTransformer(nn.Module):
                 qk_scale=qk_scale,
                 drop=drop_rate,
                 attn_drop=attn_drop_rate,
+                drop_path=dpr[i],    # V-JEPA 2: stochastic depth
                 norm_layer=norm_layer,
                 grid_size=None,      # Not used for 1D
                 grid_depth=None,     # Not used for 1D
