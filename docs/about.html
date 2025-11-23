@@ -229,62 +229,97 @@
 
             <div class="diagram-container">
                 <pre class="mermaid">
-flowchart LR
-    subgraph INPUT["📥 Input"]
-        P[Problem]
+%%{init: {'theme': 'dark', 'themeVariables': { 'fontSize': '14px' }}}%%
+flowchart TB
+    subgraph INPUT["<b>📥 INPUT</b>"]
+        direction TB
+        P["🧩 <b>Problem</b><br/><i>Solve: 2x + 5 = 13</i>"]
     end
 
-    subgraph LLM["🤖 Language Model"]
-        G[Generate<br/>Reasoning]
-        S1[Step 1]
-        S2[Step 2]
-        S3[Step 3]
-        SN[Step N]
+    subgraph LLM["<b>🤖 LANGUAGE MODEL</b> (Qwen3-8B)"]
+        direction TB
+        G["⚙️ Generate Reasoning"]
+        subgraph STEPS["Reasoning Chain"]
+            direction LR
+            S1["<b>Step 1</b><br/>Subtract 5"]
+            S2["<b>Step 2</b><br/>2x = 8"]
+            S3["<b>Step 3</b><br/>Divide by 2"]
+            S4["<b>Step 4</b><br/>x = 4"]
+        end
     end
 
-    subgraph LATENT["🧠 Latent Space"]
-        H1[h₁]
-        H2[h₂]
-        H3[h₃]
-        HN[hₙ]
+    subgraph EXTRACT["<b>🔬 LATENT EXTRACTION</b> (Layer -2)"]
+        direction LR
+        H1["<b>h₁</b><br/>4096d"]
+        H2["<b>h₂</b><br/>4096d"]
+        H3["<b>h₃</b><br/>4096d"]
+        H4["<b>h₄</b><br/>4096d"]
     end
 
-    subgraph RJEPA["⚡ R-JEPA World Model"]
-        ENC[Context<br/>Encoder]
-        PRED[Predictor]
-        TARGET[Target<br/>Encoder<br/>EMA]
+    subgraph RJEPA["<b>⚡ R-JEPA WORLD MODEL</b>"]
+        direction TB
+        subgraph ONLINE["<span style='color:#22c55e'><b>TRAINABLE</b></span>"]
+            direction LR
+            CE["🟢 <b>Context Encoder</b><br/>6 layers, 2048d"]
+            PR["🔵 <b>Predictor</b><br/>4 layers"]
+        end
+        subgraph FROZEN["<span style='color:#f59e0b'><b>EMA FROZEN</b></span>"]
+            TE["🟡 <b>Target Encoder</b><br/>τ = 0.996"]
+        end
     end
 
-    subgraph OUTPUT["📤 Output"]
-        SCORE[Coherence<br/>Score]
-        CORRECT[Corrected<br/>Reasoning]
+    subgraph COMPARE["<b>📊 COMPARISON</b>"]
+        direction TB
+        ZPRED["ẑ₃<br/><i>predicted</i>"]
+        ZTARGET["z₃<br/><i>actual</i>"]
+        LOSS["📉 <b>L1 Loss</b><br/>+ variance reg"]
+    end
+
+    subgraph OUTPUT["<b>📤 OUTPUT</b>"]
+        direction TB
+        SCORE["✅ <b>Coherence Score</b><br/><i>0.92 - High confidence</i>"]
+        GUIDE["🎯 <b>Guidance Signal</b><br/><i>For NUDGE mode</i>"]
     end
 
     P --> G
-    G --> S1 & S2 & S3 & SN
+    G --> STEPS
     S1 --> H1
     S2 --> H2
     S3 --> H3
-    SN --> HN
+    S4 --> H4
 
-    H1 & H2 --> ENC
-    ENC --> PRED
-    PRED -.->|"predict h₃"| H3
-    H3 --> TARGET
-    TARGET -.->|"compare"| PRED
+    H1 & H2 --> CE
+    CE --> PR
+    PR --> ZPRED
 
-    PRED --> SCORE
-    PRED --> CORRECT
+    H3 --> TE
+    TE --> ZTARGET
 
-    style INPUT fill:#1e293b,stroke:#6366f1,color:#e2e8f0
-    style LLM fill:#1e293b,stroke:#0ea5e9,color:#e2e8f0
-    style LATENT fill:#1e293b,stroke:#22d3ee,color:#e2e8f0
-    style RJEPA fill:#1e293b,stroke:#6366f1,color:#e2e8f0
-    style OUTPUT fill:#1e293b,stroke:#22d3ee,color:#e2e8f0
+    ZPRED --> LOSS
+    ZTARGET --> LOSS
+
+    LOSS --> SCORE
+    LOSS --> GUIDE
+
+    style INPUT fill:#0f172a,stroke:#6366f1,stroke-width:2px,color:#e2e8f0
+    style LLM fill:#0f172a,stroke:#0ea5e9,stroke-width:2px,color:#e2e8f0
+    style STEPS fill:#1e293b,stroke:#0ea5e9,stroke-width:1px,color:#e2e8f0
+    style EXTRACT fill:#0f172a,stroke:#22d3ee,stroke-width:2px,color:#e2e8f0
+    style RJEPA fill:#0f172a,stroke:#6366f1,stroke-width:3px,color:#e2e8f0
+    style ONLINE fill:#134e4a,stroke:#22c55e,stroke-width:2px,color:#e2e8f0
+    style FROZEN fill:#422006,stroke:#f59e0b,stroke-width:2px,color:#e2e8f0
+    style COMPARE fill:#0f172a,stroke:#a78bfa,stroke-width:2px,color:#e2e8f0
+    style OUTPUT fill:#0f172a,stroke:#22c55e,stroke-width:2px,color:#e2e8f0
                 </pre>
             </div>
 
-            <p class="diagram-caption">The R-JEPA pipeline: A problem goes through the LLM to generate reasoning steps. Each step produces a latent vector (h). R-JEPA learns to predict what the next latent should look like based on previous ones, detecting when reasoning goes off track.</p>
+            <p class="diagram-caption">
+                <b>The R-JEPA Pipeline:</b> A problem enters the LLM which generates step-by-step reasoning.
+                Each step's hidden state (4096-dim vector from layer -2) is extracted.
+                R-JEPA's Context Encoder + Predictor learn to predict the next latent (ẑ₃) from visible context (h₁, h₂).
+                The Target Encoder (EMA) provides the ground truth (z₃).
+                Low L1 loss = coherent reasoning. High loss = potential error detected.
+            </p>
 
             <h2 id="modes">Three Ways R-JEPA Helps</h2>
 
