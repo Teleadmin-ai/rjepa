@@ -1053,8 +1053,8 @@
                     <div class="price">Pay-per-use <span>/ token</span></div>
                     <ul>
                         <li>Pre-trained checkpoints (no GPU required)</li>
-                        <li>REST API: /score, /predict, /nudge</li>
-                        <li><strong>Latent Memory</strong>: Cross-session context persistence</li>
+                        <li>REST API for reasoning guidance</li>
+                        <li><strong>Human Memory System</strong>: Persistent cross-session memory</li>
                         <li><strong>Multi-Model</strong>: Switch LLM backends instantly</li>
                         <li><strong>Auto-scaling</strong>: Handle any load</li>
                         <li>Priority support & SLA guarantee</li>
@@ -1070,10 +1070,11 @@
                 <p>
                     With R-JEPA Cloud, <strong>your text data never leaves your infrastructure</strong>. Here's how it works:<br><br>
                     1. You extract latent vectors locally from your LLM (4096-dim abstract representations)<br>
-                    2. Only these <strong>latent vectors</strong> are sent to our API (not your text!)<br>
-                    3. We return guidance scores or predicted latents<br><br>
-                    Latent vectors are <strong>mathematically irreversible</strong> - it's impossible to reconstruct the original text from them.
-                    This makes R-JEPA Cloud compatible with <strong>GDPR, HIPAA, and enterprise security requirements</strong>.
+                    2. Only these <strong>latent vectors</strong> are sent to our API — they act as pointers<br>
+                    3. Your text stays in your local database, indexed by these latent references<br>
+                    4. We return memory indices + guidance — you reconstruct context locally<br><br>
+                    Latent vectors are <strong>mathematically irreversible</strong> — impossible to reconstruct original text.
+                    Compatible with <strong>GDPR, HIPAA, and enterprise security requirements</strong>.
                 </p>
             </div>
         </div>
