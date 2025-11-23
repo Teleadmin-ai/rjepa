@@ -124,7 +124,7 @@ export default function Home() {
               </li>
             </ul>
             <a
-              href="mailto:contact@teleadmin.net?subject=R-JEPA%20API%20Access"
+              href="mailto:commercial@teleadmin.net?subject=R-JEPA%20API%20Access"
               className="inline-flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors"
             >
               <Cloud className="h-5 w-5" />

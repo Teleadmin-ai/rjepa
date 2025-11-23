@@ -4,7 +4,7 @@
 [![Python 3.11+](https://img.shields.io/badge/Python-3.11+-blue.svg)](https://python.org)
 [![PyTorch 2.1+](https://img.shields.io/badge/PyTorch-2.1+-orange.svg)](https://pytorch.org)
 
-A **World Model for Text Reasoning** inspired by Meta AI's V-JEPA, adapted for textual reasoning sequences.
+A **World Model for Text Reasoning** based on Meta AI's V-JEPA 2 (MIT License), adapted for textual reasoning sequences.
 
 ## 🎯 Two Editions
 
@@ -293,10 +293,11 @@ YOUR INFRASTRUCTURE                    TELEADMIN CLOUD
 
 Interested in Cloud API? Join the waitlist:
 
-📧 **[music.romain@teleadmin.net](mailto:music.romain@teleadmin.net?subject=R-JEPA%20Cloud%20API%20Interest)**
+📧 **[commercial@teleadmin.net](mailto:commercial@teleadmin.net?subject=R-JEPA%20Cloud%20API%20Interest)**
 
 ## References
 
+- [V-JEPA 2](https://github.com/facebookresearch/vjepa2) (Meta AI, 2025) - MIT License
 - [V-JEPA: Latent Video Prediction for Visual Representation Learning](https://ai.meta.com/research/publications/v-jepa-latent-video-prediction-for-visual-representation-learning/) (Meta AI, 2024)
 - [A Path Towards Autonomous Machine Intelligence](https://openreview.net/pdf?id=BZ5a1r-kVsf) (Yann LeCun, 2022)
 
