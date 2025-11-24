@@ -914,6 +914,126 @@
             text-decoration: none;
         }
 
+        /* Ecosystem Dropdown */
+        .dropdown {
+            position: relative;
+        }
+
+        .ecosystem-link {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            cursor: pointer;
+            color: var(--text-muted);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+
+        .ecosystem-link:hover {
+            color: var(--accent);
+        }
+
+        .ecosystem-link .icon {
+            font-size: 1.2rem;
+        }
+
+        .ecosystem-link .arrow {
+            font-size: 0.7rem;
+            transition: transform 0.3s;
+        }
+
+        .dropdown:hover .arrow {
+            transform: rotate(180deg);
+        }
+
+        .dropdown-menu {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background: var(--bg-card);
+            border: 1px solid rgba(99, 102, 241, 0.2);
+            border-radius: 12px;
+            padding: 0.5rem;
+            min-width: 280px;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-10px);
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            z-index: 1000;
+            list-style: none;
+        }
+
+        .dropdown:hover .dropdown-menu {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        .dropdown-item {
+            list-style: none;
+            margin: 0;
+        }
+
+        .dropdown-item a {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            text-decoration: none;
+            transition: all 0.2s;
+            color: var(--text);
+        }
+
+        .dropdown-item a:hover {
+            background: rgba(99, 102, 241, 0.1);
+        }
+
+        .dropdown-item.hub a {
+            border-bottom: 1px solid rgba(99, 102, 241, 0.2);
+            margin-bottom: 0.5rem;
+            padding-bottom: 1rem;
+        }
+
+        .site-icon {
+            font-size: 1.5rem;
+            filter: grayscale(0.3);
+            transition: all 0.2s;
+        }
+
+        .dropdown-item a:hover .site-icon {
+            filter: grayscale(0);
+            transform: scale(1.1);
+        }
+
+        .site-info {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+        }
+
+        .site-info strong {
+            color: var(--text);
+            font-size: 0.95rem;
+        }
+
+        .site-info small {
+            color: var(--text-muted);
+            font-size: 0.8rem;
+        }
+
+        /* Site actuel (highlight) */
+        .dropdown-item.current a {
+            background: rgba(99, 102, 241, 0.15);
+            border-left: 3px solid var(--primary);
+        }
+
+        .dropdown-item.current .site-icon {
+            filter: grayscale(0);
+        }
+
         /* Responsive */
         @media (max-width: 768px) {
             .hero h1 {
@@ -963,6 +1083,51 @@
                     <li><a href="#pricing" data-i18n="nav.pricing">Pricing</a></li>
                     <li><a href="#modes" data-i18n="nav.inference">Inference</a></li>
                     <li><a href="https://github.com/Teleadmin-ai/rjepa">GitHub</a></li>
+                    <li class="dropdown">
+                        <a href="#" class="ecosystem-link">
+                            <span class="icon">🌐</span>
+                            <span data-i18n="nav.ecosystem">Ecosystem</span>
+                            <span class="arrow">▼</span>
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li class="dropdown-item hub">
+                                <a href="https://teleadmin.net">
+                                    <span class="site-icon">🏢</span>
+                                    <div class="site-info">
+                                        <strong data-i18n="ecosystem.teleadmin.title">Teleadmin</strong>
+                                        <small data-i18n="ecosystem.teleadmin.desc">Central Hub</small>
+                                    </div>
+                                </a>
+                            </li>
+                            <li class="dropdown-item current">
+                                <a href="https://cognition4ai.com">
+                                    <span class="site-icon">🧠</span>
+                                    <div class="site-info">
+                                        <strong data-i18n="ecosystem.cognition4ai.title">R-JEPA</strong>
+                                        <small data-i18n="ecosystem.cognition4ai.desc">World Model</small>
+                                    </div>
+                                </a>
+                            </li>
+                            <li class="dropdown-item">
+                                <a href="https://cyberplace.ai">
+                                    <span class="site-icon">🌐</span>
+                                    <div class="site-info">
+                                        <strong data-i18n="ecosystem.cyberplace.title">Cyberplace</strong>
+                                        <small data-i18n="ecosystem.cyberplace.desc">AI Resources</small>
+                                    </div>
+                                </a>
+                            </li>
+                            <li class="dropdown-item">
+                                <a href="https://cognition4chat.com">
+                                    <span class="site-icon">💬</span>
+                                    <div class="site-info">
+                                        <strong data-i18n="ecosystem.cognition4chat.title">Cognition4Chat</strong>
+                                        <small data-i18n="ecosystem.cognition4chat.desc">WebChat Agent</small>
+                                    </div>
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
                 </ul>
                 <div class="lang-selector">
                     <button class="lang-btn active" data-lang="en">EN</button>
@@ -1398,6 +1563,17 @@ flowchart TB
                 "nav.features": "Features",
                 "nav.pricing": "Pricing",
                 "nav.inference": "Inference",
+                "nav.ecosystem": "Ecosystem",
+
+                // Ecosystem
+                "ecosystem.teleadmin.title": "Teleadmin",
+                "ecosystem.teleadmin.desc": "Central Hub",
+                "ecosystem.cyberplace.title": "Cyberplace",
+                "ecosystem.cyberplace.desc": "AI Resources",
+                "ecosystem.cognition4ai.title": "R-JEPA",
+                "ecosystem.cognition4ai.desc": "World Model",
+                "ecosystem.cognition4chat.title": "Cognition4Chat",
+                "ecosystem.cognition4chat.desc": "WebChat Agent",
 
                 // Hero
                 "hero.badge": "Based on V-JEPA & Yann LeCun's Work (2022-2024)",
@@ -1459,6 +1635,17 @@ flowchart TB
                 "nav.features": "Fonctionnalités",
                 "nav.pricing": "Tarifs",
                 "nav.inference": "Inférence",
+                "nav.ecosystem": "Écosystème",
+
+                // Ecosystem
+                "ecosystem.teleadmin.title": "Teleadmin",
+                "ecosystem.teleadmin.desc": "Hub Central",
+                "ecosystem.cyberplace.title": "Cyberplace",
+                "ecosystem.cyberplace.desc": "Ressources IA",
+                "ecosystem.cognition4ai.title": "R-JEPA",
+                "ecosystem.cognition4ai.desc": "World Model",
+                "ecosystem.cognition4chat.title": "Cognition4Chat",
+                "ecosystem.cognition4chat.desc": "Agent WebChat",
 
                 // Hero
                 "hero.badge": "Basé sur V-JEPA & les travaux de Yann LeCun (2022-2024)",
