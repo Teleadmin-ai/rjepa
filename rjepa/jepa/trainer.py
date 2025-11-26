@@ -404,13 +404,46 @@ class RJEPATrainer:
             # OPTION 2: Apply masks on GPU (batch is list of tuples from simple_collate)
             masked_batch = self.masker(batch)
 
-            # Extract tensors and move to GPU
-            latents = masked_batch["latents"].to(self.device)
-            context_mask = masked_batch["context_mask"].to(self.device)
-            target_mask = masked_batch["target_mask"].to(self.device)
+            # Extract masks from collated batch (all on CPU from MaskCollator)
+            context_mask_bool = masked_batch["context_mask"]
+            target_mask_bool = masked_batch["target_mask"]
+            latents = masked_batch["latents"]
             domain_ids = masked_batch.get("domain_ids")
+
+            # Move tensors to GPU
+            latents = latents.to(self.device)
+            context_mask_bool = context_mask_bool.to(self.device)
+            target_mask_bool = target_mask_bool.to(self.device)
             if domain_ids is not None:
                 domain_ids = domain_ids.to(self.device)
+
+            # Convert boolean masks to index masks for V-JEPA format
+            # V-JEPA expects: List of [B, K] tensors where K = number of positions to keep
+            B = latents.size(0)
+            context_mask = []
+            target_mask = []
+            for b in range(B):
+                ctx_idx = (context_mask_bool[b]).nonzero(as_tuple=False).squeeze(-1)  # [K_c]
+                tgt_idx = (target_mask_bool[b]).nonzero(as_tuple=False).squeeze(-1)  # [K_t]
+                context_mask.append(ctx_idx.unsqueeze(0))  # [1, K_c]
+                target_mask.append(tgt_idx.unsqueeze(0))  # [1, K_t]
+
+            # Stack into [B, K] tensors (pad if needed)
+            max_ctx = max(m.size(1) for m in context_mask)
+            max_tgt = max(m.size(1) for m in target_mask)
+
+            context_mask_tensor = torch.zeros(B, max_ctx, dtype=torch.long, device=self.device)
+            target_mask_tensor = torch.zeros(B, max_tgt, dtype=torch.long, device=self.device)
+
+            for b in range(B):
+                ctx_len = context_mask[b].size(1)
+                tgt_len = target_mask[b].size(1)
+                context_mask_tensor[b, :ctx_len] = context_mask[b]
+                target_mask_tensor[b, :tgt_len] = target_mask[b]
+
+            # Wrap in list for V-JEPA format (single mask per batch)
+            context_mask = [context_mask_tensor]
+            target_mask = [target_mask_tensor]
 
             # Forward pass
             if self.amp_enabled:

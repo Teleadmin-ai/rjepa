@@ -215,8 +215,9 @@ class StepPredictor(nn.Module):
 
         Args:
             ctxt: [B*M_c, N_ctxt, encoder_dim] - Context tokens from encoder
-            tgt: [B, max_seq_len, encoder_dim] - Target tokens (ground truth, for diffusion)
+            tgt: [B, actual_seq_len, encoder_dim] - Target tokens (ground truth, for diffusion)
                  Can be None if using mask_tokens
+                 NOTE: actual_seq_len can be less than max_seq_len (DYNAMIC)
             masks_ctxt: List of [B, K_c] tensors - Indices of context steps
             masks_tgt: List of [B, K_t] tensors - Indices of target steps to predict
             mask_index: Which mask token to use (if use_mask_tokens=True)
@@ -240,13 +241,18 @@ class StepPredictor(nn.Module):
         # Batch size (original, before masking)
         B = len(ctxt) // len(masks_ctxt)
 
+        # DYNAMIC FIX: Get actual sequence length from tgt (not fixed max_seq_len)
+        actual_seq_len = tgt.shape[1] if tgt is not None else self.max_seq_len
+
         # Map context tokens to predictor dimension
         x = self.predictor_embed(ctxt)  # [B*M_c, N_ctxt, predictor_dim]
         _, N_ctxt, D = x.shape
 
-        # Add positional embeddings to context tokens
+        # Add positional embeddings to context tokens (DYNAMIC: slice to actual length)
         if self.predictor_pos_embed is not None:
-            ctxt_pos_embed = self.predictor_pos_embed.repeat(B, 1, 1)  # [B, max_seq_len, D]
+            # Slice pos_embed to actual sequence length for proper indexing
+            pos_embed_sliced = self.predictor_pos_embed[:, :actual_seq_len, :]  # [1, actual_seq_len, D]
+            ctxt_pos_embed = pos_embed_sliced.repeat(B, 1, 1)  # [B, actual_seq_len, D]
             x += apply_masks(ctxt_pos_embed, masks_ctxt)  # Keep only context positions
 
         # Initialize target tokens
@@ -254,19 +260,20 @@ class StepPredictor(nn.Module):
         # Option 2: Diffusion (add noise to ground truth targets)
         if self.mask_tokens is None:
             # Diffusion mode: map targets to predictor dim and add noise
-            pred_tokens = self.predictor_embed(tgt)  # [B, max_seq_len, predictor_dim]
+            pred_tokens = self.predictor_embed(tgt)  # [B, actual_seq_len, predictor_dim]
             pred_tokens = self.diffusion(pred_tokens)
             pred_tokens = apply_masks(pred_tokens, masks_tgt)  # Keep only target positions
         else:
-            # Mask token mode: use learnable tokens
+            # Mask token mode: use learnable tokens (DYNAMIC: use actual_seq_len)
             mask_index = mask_index % self.num_mask_tokens
             pred_tokens = self.mask_tokens[mask_index]  # [1, 1, predictor_dim]
-            pred_tokens = pred_tokens.repeat(B, self.max_seq_len, 1)  # [B, max_seq_len, D]
+            pred_tokens = pred_tokens.repeat(B, actual_seq_len, 1)  # [B, actual_seq_len, D]
             pred_tokens = apply_masks(pred_tokens, masks_tgt)  # [B*M_t, N_tgt, D]
 
-        # Add positional embeddings to target tokens
+        # Add positional embeddings to target tokens (DYNAMIC: slice to actual length)
         if self.predictor_pos_embed is not None:
-            pos_embs = self.predictor_pos_embed.repeat(B, 1, 1)  # [B, max_seq_len, D]
+            pos_embed_sliced = self.predictor_pos_embed[:, :actual_seq_len, :]  # [1, actual_seq_len, D]
+            pos_embs = pos_embed_sliced.repeat(B, 1, 1)  # [B, actual_seq_len, D]
             pos_embs = apply_masks(pos_embs, masks_tgt)  # [B*M_t, N_tgt, D]
             pos_embs = repeat_interleave_batch(pos_embs, B, repeat=len(masks_ctxt))
             pred_tokens += pos_embs

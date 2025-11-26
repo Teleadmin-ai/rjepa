@@ -34,10 +34,10 @@ masker:
   max_mask_ratio: 0.7
   num_blocks: 1
 
-# Data paths
+# Data paths - CORRECTED 2025-11-26: Use validated/ (forward-pass only, no LLM generation)
 data:
-  train_latents_dir: "data/latents/qwen3-8b/academic"
-  val_latents_dir: "data/latents/qwen3-8b/academic"
+  train_latents_dir: "data/latents/qwen3-8b/validated"
+  val_latents_dir: "data/latents/qwen3-8b/validated"
 
 # Training configuration
 training:

@@ -84,6 +84,23 @@ class ExtractLatentsResponse(BaseModel):
     # Note: actual latents returned as separate endpoint due to size
 
 
+class GenerateWithLatentsRequest(BaseModel):
+    """Request for generation + latent extraction in one call."""
+    prompt: str
+    max_new_tokens: int = 512
+    temperature: float = 0.7
+    num_samples: int = 1
+    step_token: str = "Step"
+
+
+class GenerateWithLatentsResponse(BaseModel):
+    """Response with both text and latents."""
+    samples: List[dict]  # Each with full_text, steps, step_boundaries, latents
+    model_name: str
+    layer_extracted: int
+    hidden_size: int
+
+
 # ═══════════════════════════════════════════════════════════════════════════════
 # Endpoints
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -200,6 +217,71 @@ async def extract_latents(request: ExtractLatentsRequest):
 
     except Exception as e:
         logger.error(f"Latent extraction failed: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/generate_with_latents", response_model=GenerateWithLatentsResponse)
+async def generate_with_latents(request: GenerateWithLatentsRequest):
+    """
+    Generate Chain-of-Thought AND extract latents in one call.
+
+    This endpoint is used by inference modes (rerank, nudge, plan) that need
+    both the generated text AND the latent vectors for R-JEPA scoring.
+
+    Returns:
+        {
+          "samples": [
+            {
+              "full_text": "...",
+              "steps": ["Step 1: ...", "Step 2: ..."],
+              "step_boundaries": [(0, 10), (10, 25), ...],
+              "latents": [[0.1, 0.2, ...], ...]  # [num_steps, hidden_size] as list
+            },
+            ...
+          ],
+          "model_name": "Qwen/Qwen3-8B",
+          "layer_extracted": -2,
+          "hidden_size": 4096
+        }
+    """
+    if llm_adapter is None:
+        raise HTTPException(status_code=503, detail="LLM not loaded")
+
+    try:
+        results = llm_adapter.generate_with_cot(
+            prompt=request.prompt,
+            max_new_tokens=request.max_new_tokens,
+            temperature=request.temperature,
+            num_samples=request.num_samples,
+            step_token=request.step_token,
+            force_structure=True,
+        )
+
+        samples = []
+        for result in results:
+            # Extract latents for this sample
+            latents = llm_adapter.extract_latents(
+                tokens=result["tokens"],
+                step_boundaries=result["step_boundaries"],
+            )
+
+            samples.append({
+                "full_text": result["full_text"],
+                "steps": result["steps"],
+                "step_boundaries": result["step_boundaries"],
+                "num_tokens": result["tokens"].shape[1],
+                "latents": latents.tolist(),  # Convert tensor to list for JSON
+            })
+
+        return GenerateWithLatentsResponse(
+            samples=samples,
+            model_name=llm_adapter.model_name,
+            layer_extracted=llm_adapter.layer_to_extract,
+            hidden_size=llm_adapter.hidden_size,
+        )
+
+    except Exception as e:
+        logger.error(f"Generation with latents failed: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
 
 

@@ -67,7 +67,15 @@ class ParquetIO:
             List of dicts
         """
         table = pq.read_table(input_path, columns=columns)
-        return table.to_pylist()
+
+        # Use pandas conversion as fallback (more robust than to_pylist)
+        try:
+            return table.to_pylist()
+        except (IndexError, Exception) as e:
+            logger.warning(f"to_pylist() failed, using pandas fallback: {e}")
+            # Fallback to pandas which is more robust
+            df = table.to_pandas()
+            return df.to_dict('records')
 
     @staticmethod
     def read_batch(

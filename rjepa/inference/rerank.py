@@ -5,19 +5,24 @@ Génère N chaînes de raisonnement candidates et choisit la meilleure
 selon le score JEPA (cohérence avec le world model).
 """
 import logging
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional, Union
 import torch
 import numpy as np
 
-from rjepa.llm.adapter import LLMAdapter
 from rjepa.jepa.client import RJEPAClient
 
 logger = logging.getLogger(__name__)
 
 
+def _is_http_client(llm) -> bool:
+    """Check if llm is an HTTP client (has with_latents support)."""
+    # Check for StudentLLMClient by looking for HTTP-specific attributes
+    return hasattr(llm, '_client') and hasattr(llm, 'base_url')
+
+
 def rerank_cots_with_jepa(
     prompt: str,
-    llm: LLMAdapter,
+    llm,  # LLMAdapter or StudentLLMClient
     rjepa_client: RJEPAClient,
     num_samples: int = 4,
     temperature: float = 0.8,
@@ -35,7 +40,7 @@ def rerank_cots_with_jepa(
 
     Args:
         prompt: Question/problème à résoudre
-        llm: LLM adapter (student model)
+        llm: LLM adapter (student model) - can be LLMAdapter or StudentLLMClient
         rjepa_client: Client HTTP vers service R-JEPA
         num_samples: Nombre de candidates à générer (default: 4)
         temperature: Temperature pour génération (default: 0.8)
@@ -61,27 +66,48 @@ def rerank_cots_with_jepa(
     """
     logger.info(f"Generating {num_samples} CoT candidates for prompt: {prompt[:100]}...")
 
+    # Check if we're using HTTP client or local adapter
+    use_http_client = _is_http_client(llm)
+    if use_http_client:
+        logger.info("Using HTTP client with integrated latent extraction")
+
     # Generate N candidates
     candidates = []
 
     for i in range(num_samples):
         logger.debug(f"Generating candidate {i+1}/{num_samples}...")
 
-        # Generate CoT with student LLM
-        cot_result = llm.generate_with_cot(
-            prompt=prompt,
-            max_new_tokens=512,
-            temperature=temperature,
-            step_token="Step",
-            num_samples=1,
-        )[0]
+        if use_http_client:
+            # HTTP client: use with_latents=True to get latents directly
+            cot_result = llm.generate_with_cot(
+                prompt=prompt,
+                max_new_tokens=1024,
+                temperature=temperature,
+                step_token="Step",
+                num_samples=1,
+                with_latents=True,  # Get latents from server
+            )[0]
 
-        # Extract latents for this CoT
-        latents = llm.extract_latents(
-            tokens=cot_result["tokens"],
-            layer_idx=llm.layer_to_extract,
-            step_boundaries=cot_result["step_boundaries"],
-        )
+            # Latents are returned as list, convert to tensor for JEPA client
+            latents = torch.tensor(cot_result["latents"], dtype=torch.float32)
+            num_tokens = cot_result.get("num_tokens", len(cot_result.get("steps", [])) * 50)
+        else:
+            # Local adapter: use traditional extraction
+            cot_result = llm.generate_with_cot(
+                prompt=prompt,
+                max_new_tokens=1024,
+                temperature=temperature,
+                step_token="Step",
+                num_samples=1,
+            )[0]
+
+            # Extract latents locally
+            latents = llm.extract_latents(
+                tokens=cot_result["tokens"],
+                layer_idx=llm.layer_to_extract,
+                step_boundaries=cot_result["step_boundaries"],
+            )
+            num_tokens = cot_result["tokens"].shape[1]
 
         # Compute JEPA score
         jepa_result = rjepa_client.score(
@@ -95,7 +121,6 @@ def rerank_cots_with_jepa(
         # Compute logprob (approximation)
         # Note: Pour avoir les vrais logprobs, il faudrait les récupérer du modèle
         # Pour l'instant, on utilise une approximation basée sur la longueur
-        num_tokens = cot_result["tokens"].shape[1]
         logprob_approx = -0.1 * num_tokens  # Approximation simple
 
         # Compute composite score
@@ -143,7 +168,7 @@ def rerank_cots_with_jepa(
 
 def rerank_existing_cots(
     cots: List[str],
-    llm: LLMAdapter,
+    llm,  # LLMAdapter or StudentLLMClient
     rjepa_client: RJEPAClient,
     mask_ratio: float = 0.5,
     domain_id: Optional[int] = None,
@@ -170,34 +195,54 @@ def rerank_existing_cots(
     """
     logger.info(f"Re-ranking {len(cots)} existing CoT candidates...")
 
+    # Check if we're using HTTP client or local adapter
+    use_http_client = _is_http_client(llm)
+
     candidates = []
 
     for i, cot_text in enumerate(cots):
         logger.debug(f"Scoring candidate {i+1}/{len(cots)}...")
 
-        # Tokenize and segment
-        tokens = llm.tokenizer.encode(cot_text, return_tensors="pt")
-
         # Segment into steps (simple split on "Step X:")
         import re
         steps = re.split(r"(Step \d+:)", cot_text)
         steps = [s.strip() for s in steps if s.strip() and not s.startswith("Step")]
-
-        # Estimate step boundaries (approximation)
-        # Pour une vraie implémentation, il faudrait tokenizer chaque step
         num_steps = len(steps)
-        tokens_per_step = tokens.shape[1] // max(num_steps, 1)
-        step_boundaries = [
-            (i * tokens_per_step, (i + 1) * tokens_per_step)
-            for i in range(num_steps)
-        ]
 
-        # Extract latents
-        latents = llm.extract_latents(
-            tokens=tokens,
-            layer_idx=llm.layer_to_extract,
-            step_boundaries=step_boundaries,
-        )
+        if use_http_client:
+            # HTTP client: Use extract_latents endpoint
+            latents_result = llm.extract_latents(
+                text=cot_text,
+                step_token="Step",
+            )
+            # For HTTP client, we get metadata only, need to use generate_with_latents
+            # As a workaround, regenerate with the same text to get latents
+            cot_result = llm.generate_with_cot(
+                prompt=cot_text,
+                max_new_tokens=1,  # Minimal generation, we just want latents
+                temperature=0.1,
+                step_token="Step",
+                num_samples=1,
+                with_latents=True,
+            )[0]
+            latents = torch.tensor(cot_result["latents"], dtype=torch.float32)
+        else:
+            # Local adapter: use traditional extraction
+            tokens = llm.tokenizer.encode(cot_text, return_tensors="pt")
+
+            # Estimate step boundaries (approximation)
+            tokens_per_step = tokens.shape[1] // max(num_steps, 1)
+            step_boundaries = [
+                (j * tokens_per_step, (j + 1) * tokens_per_step)
+                for j in range(num_steps)
+            ]
+
+            # Extract latents
+            latents = llm.extract_latents(
+                tokens=tokens,
+                layer_idx=llm.layer_to_extract,
+                step_boundaries=step_boundaries,
+            )
 
         # Compute JEPA score
         jepa_result = rjepa_client.score(
@@ -238,7 +283,7 @@ def rerank_existing_cots(
 
 def rerank_with_ensembling(
     prompt: str,
-    llm: LLMAdapter,
+    llm,  # LLMAdapter or StudentLLMClient
     rjepa_client: RJEPAClient,
     num_samples: int = 8,
     temperature: float = 0.8,
@@ -253,7 +298,7 @@ def rerank_with_ensembling(
 
     Args:
         prompt: Question/problème
-        llm: LLM adapter
+        llm: LLM adapter (LLMAdapter or StudentLLMClient)
         rjepa_client: Client R-JEPA
         num_samples: Nombre de candidates à générer
         temperature: Temperature génération

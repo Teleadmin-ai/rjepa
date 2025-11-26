@@ -101,6 +101,7 @@ class RJEPAService:
         self,
         checkpoint_path: Path,
         device: str = "cuda" if torch.cuda.is_available() else "cpu",
+        config_path: Optional[Path] = None,
     ):
         """
         Initialize service.
@@ -108,9 +109,11 @@ class RJEPAService:
         Args:
             checkpoint_path: Path to R-JEPA checkpoint (.pth)
             device: Device to run inference on
+            config_path: Optional path to config YAML (used if checkpoint lacks model_config)
         """
         self.checkpoint_path = checkpoint_path
         self.device = device
+        self.config_path = config_path
         self.model: Optional[ReasoningJEPA] = None
         self.model_config: Optional[Dict] = None
 
@@ -129,14 +132,23 @@ class RJEPAService:
         # Load checkpoint
         checkpoint = torch.load(self.checkpoint_path, map_location=self.device)
 
-        # Extract model config
+        # Extract model config from checkpoint or external file
         self.model_config = checkpoint.get("model_config", {})
 
         if not self.model_config:
-            raise ValueError(
-                "Checkpoint does not contain model_config. "
-                "Please provide a valid R-JEPA checkpoint."
-            )
+            # Try loading from external config file
+            if self.config_path and self.config_path.exists():
+                import yaml
+                logger.info(f"Loading model config from external file: {self.config_path}")
+                with open(self.config_path, "r") as f:
+                    full_config = yaml.safe_load(f)
+                self.model_config = full_config.get("model", {})
+
+            if not self.model_config:
+                raise ValueError(
+                    "Checkpoint does not contain model_config and no valid config file provided. "
+                    "Please provide --config path/to/train.yaml"
+                )
 
         # Create model from config
         self.model = create_rjepa_model(self.model_config)
@@ -187,26 +199,31 @@ class RJEPAService:
 
         # Create context and target masks
         num_steps = latents.shape[1]
-        num_masked = int(num_steps * mask_ratio)
+        num_masked = max(1, int(num_steps * mask_ratio))  # At least 1 masked
 
         # Use contiguous masking (mask middle block)
         start_idx = (num_steps - num_masked) // 2
-        context_mask = torch.ones(1, num_steps, dtype=torch.bool, device=self.device)
-        context_mask[0, start_idx : start_idx + num_masked] = False
 
-        target_mask = ~context_mask
+        # Create boolean masks
+        context_mask_bool = torch.ones(1, num_steps, dtype=torch.bool, device=self.device)
+        context_mask_bool[0, start_idx : start_idx + num_masked] = False
+        target_mask_bool = ~context_mask_bool
 
-        # Prepare domain_ids
-        domain_ids = None
-        if domain_id is not None:
-            domain_ids = torch.tensor([domain_id], device=self.device)
+        # Convert boolean masks to index tensors (format expected by model)
+        # masks_context: List of [B, K_c] index tensors
+        # masks_target: List of [B, K_t] index tensors
+        context_indices = context_mask_bool[0].nonzero(as_tuple=False).squeeze(-1)  # [K_c]
+        target_indices = target_mask_bool[0].nonzero(as_tuple=False).squeeze(-1)    # [K_t]
 
-        # Forward pass
+        masks_context = [context_indices.unsqueeze(0)]  # List of [1, K_c]
+        masks_target = [target_indices.unsqueeze(0)]    # List of [1, K_t]
+
+        # Forward pass (model expects masks_context, masks_target as positional args)
         outputs = self.model(
             latents,
-            context_mask=context_mask,
-            target_mask=target_mask,
-            domain_ids=domain_ids,
+            masks_context,
+            masks_target,
+            mask_index=0,
             compute_loss=True,
         )
 
@@ -240,32 +257,35 @@ class RJEPAService:
         # Add batch dimension
         latents = latents.unsqueeze(0).to(self.device)  # [1, S, D]
 
-        # Create masks
+        # Create boolean masks
         num_steps = latents.shape[1]
-        context_mask = torch.ones(1, num_steps, dtype=torch.bool, device=self.device)
-        context_mask[0, mask_indices] = False
+        context_mask_bool = torch.ones(1, num_steps, dtype=torch.bool, device=self.device)
+        context_mask_bool[0, mask_indices] = False
+        target_mask_bool = ~context_mask_bool
 
-        target_mask = ~context_mask
+        # Convert boolean masks to index tensors (format expected by model)
+        # masks_context: List of [B, K_c] index tensors
+        # masks_target: List of [B, K_t] index tensors
+        context_indices = context_mask_bool[0].nonzero(as_tuple=False).squeeze(-1)  # [K_c]
+        target_indices = target_mask_bool[0].nonzero(as_tuple=False).squeeze(-1)    # [K_t]
 
-        # Prepare domain_ids
-        domain_ids = None
-        if domain_id is not None:
-            domain_ids = torch.tensor([domain_id], device=self.device)
+        masks_context = [context_indices.unsqueeze(0)]  # List of [1, K_c]
+        masks_target = [target_indices.unsqueeze(0)]    # List of [1, K_t]
 
-        # Forward pass
+        # Forward pass (model expects masks_context, masks_target as positional args)
         outputs = self.model(
             latents,
-            context_mask=context_mask,
-            target_mask=target_mask,
-            domain_ids=domain_ids,
+            masks_context,
+            masks_target,
+            mask_index=0,
             compute_loss=False,
         )
 
-        # Extract predictions for masked positions
-        pred = outputs["pred"][0]  # [S, hidden_dim]
-        pred_masked = pred[mask_indices]  # [num_masked, hidden_dim]
+        # z_pred has shape [B*M_t, K_t, D] where K_t = num_masked positions
+        # Since B=1 and M_t=1 (one mask), z_pred is [1, K_t, D]
+        z_pred = outputs["z_pred"][0]  # [K_t, D] = [num_masked, hidden_dim]
 
-        return pred_masked.cpu()
+        return z_pred.cpu()
 
 
 # ═════════════════════════════════════════════════════════════════════════════
@@ -279,6 +299,7 @@ service: Optional[RJEPAService] = None
 def create_app(
     checkpoint_path: Path,
     device: str = "cuda" if torch.cuda.is_available() else "cpu",
+    config_path: Optional[Path] = None,
 ) -> FastAPI:
     """
     Create FastAPI app with R-JEPA service.
@@ -286,6 +307,7 @@ def create_app(
     Args:
         checkpoint_path: Path to R-JEPA checkpoint
         device: Device to run inference on
+        config_path: Optional path to config YAML (used if checkpoint lacks model_config)
 
     Returns:
         FastAPI app
@@ -299,7 +321,7 @@ def create_app(
     )
 
     # Initialize service
-    service = RJEPAService(checkpoint_path=checkpoint_path, device=device)
+    service = RJEPAService(checkpoint_path=checkpoint_path, device=device, config_path=config_path)
 
     @app.get("/health", response_model=HealthResponse)
     def health():
@@ -429,11 +451,17 @@ if __name__ == "__main__":
         default=8100,
         help="Port to bind to (default: 8100)",
     )
+    parser.add_argument(
+        "--config",
+        type=Path,
+        default=None,
+        help="Path to config YAML (used if checkpoint lacks model_config)",
+    )
 
     args = parser.parse_args()
 
     # Create app
-    app = create_app(checkpoint_path=args.checkpoint, device=args.device)
+    app = create_app(checkpoint_path=args.checkpoint, device=args.device, config_path=args.config)
 
     # Run server
     logger.info(f"Starting R-JEPA service on {args.host}:{args.port}")

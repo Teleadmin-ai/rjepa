@@ -9,17 +9,22 @@ from typing import List, Dict, Any, Optional
 import torch
 import numpy as np
 
-from rjepa.llm.adapter import LLMAdapter
 from rjepa.jepa.client import RJEPAClient
 
 logger = logging.getLogger(__name__)
+
+
+def _is_http_client(llm) -> bool:
+    """Check if llm is an HTTP client (has with_latents support)."""
+    # Check for StudentLLMClient by looking for HTTP-specific attributes
+    return hasattr(llm, '_client') and hasattr(llm, 'base_url')
 
 
 def complete_reasoning_plan(
     partial_steps: List[str],
     missing_indices: List[int],
     total_steps: int,
-    llm: LLMAdapter,
+    llm,  # LLMAdapter or StudentLLMClient
     rjepa_client: RJEPAClient,
     domain_id: Optional[int] = None,
 ) -> Dict[str, Any]:
@@ -54,6 +59,67 @@ def complete_reasoning_plan(
         f"out of {total_steps}"
     )
 
+    # Check if we're using HTTP client or local adapter
+    use_http_client = _is_http_client(llm)
+
+    # For HTTP client, use simplified approach (LLM-based completion without JEPA latent prediction)
+    if use_http_client:
+        logger.info("Using HTTP client - simplified plan completion via LLM prompting")
+        predicted_steps = {}
+
+        for missing_idx in missing_indices:
+            # Get context from surrounding steps
+            context_before = (
+                partial_steps[missing_idx - 1] if missing_idx > 0 else ""
+            )
+            context_after = (
+                partial_steps[missing_idx + 1]
+                if missing_idx + 1 < len(partial_steps)
+                else ""
+            )
+
+            # Prompt LLM to complete the missing step
+            completion_prompt = f"""Given the reasoning context:
+Before: {context_before}
+After: {context_after}
+
+What is the logical intermediate step? Provide a single reasoning step.
+Step {missing_idx + 1}:"""
+
+            completion_result = llm.generate_with_cot(
+                prompt=completion_prompt,
+                max_new_tokens=128,
+                temperature=0.5,
+                step_token="Step",
+                num_samples=1,
+                with_latents=True,
+            )[0]
+
+            predicted_text = completion_result["full_text"].split("\n")[0].strip()
+            predicted_steps[missing_idx] = predicted_text
+            logger.debug(f"Predicted step {missing_idx}: {predicted_text[:100]}...")
+
+        # Reconstruct full text
+        completed_steps = []
+        for i in range(total_steps):
+            if i in missing_indices:
+                completed_steps.append(predicted_steps[i])
+            else:
+                completed_steps.append(partial_steps[i])
+
+        full_text = "\n".join(
+            f"Step {i + 1}: {step}" for i, step in enumerate(completed_steps)
+        )
+
+        logger.info(f"Plan completion done: {len(predicted_steps)} steps predicted")
+
+        return {
+            "completed_steps": completed_steps,
+            "predicted_steps": predicted_steps,
+            "full_text": full_text,
+        }
+
+    # Local adapter path - uses direct tokenizer access for JEPA-based completion
     # Extract latents for known steps
     known_steps_text = [s for s in partial_steps if s is not None]
     known_steps_full_text = "\n".join(known_steps_text)
@@ -161,7 +227,7 @@ Step {missing_idx + 1}:"""
 
 def auto_complete_missing_steps(
     prompt: str,
-    llm: LLMAdapter,
+    llm,  # LLMAdapter or StudentLLMClient
     rjepa_client: RJEPAClient,
     num_expected_steps: int = 5,
     domain_id: Optional[int] = None,
@@ -193,6 +259,11 @@ def auto_complete_missing_steps(
         f"Auto-completing reasoning plan (expected {num_expected_steps} steps)..."
     )
 
+    # Check if we're using HTTP client or local adapter
+    use_http_client = _is_http_client(llm)
+    if use_http_client:
+        logger.info("Using HTTP client with integrated latent extraction")
+
     # Génère un outline court
     outline_prompt = f"""{prompt}
 
@@ -201,13 +272,23 @@ Step 1:
 Step 2:
 ..."""
 
-    outline_result = llm.generate_with_cot(
-        prompt=outline_prompt,
-        max_new_tokens=256,
-        temperature=0.5,
-        step_token="Step",
-        num_samples=1,
-    )[0]
+    if use_http_client:
+        outline_result = llm.generate_with_cot(
+            prompt=outline_prompt,
+            max_new_tokens=256,
+            temperature=0.5,
+            step_token="Step",
+            num_samples=1,
+            with_latents=True,
+        )[0]
+    else:
+        outline_result = llm.generate_with_cot(
+            prompt=outline_prompt,
+            max_new_tokens=256,
+            temperature=0.5,
+            step_token="Step",
+            num_samples=1,
+        )[0]
 
     outline_steps = outline_result["steps"]
 
@@ -261,7 +342,7 @@ Step 2:
 
 def iterative_refinement(
     prompt: str,
-    llm: LLMAdapter,
+    llm,  # LLMAdapter or StudentLLMClient
     rjepa_client: RJEPAClient,
     num_iterations: int = 3,
     domain_id: Optional[int] = None,
@@ -286,6 +367,11 @@ def iterative_refinement(
     """
     logger.info(f"Iterative refinement: {num_iterations} iterations...")
 
+    # Check if we're using HTTP client or local adapter
+    use_http_client = _is_http_client(llm)
+    if use_http_client:
+        logger.info("Using HTTP client with integrated latent extraction")
+
     iterations = []
     current_reasoning = None
 
@@ -295,13 +381,23 @@ def iterative_refinement(
         # Generate or refine
         if current_reasoning is None:
             # First iteration: generate from scratch
-            cot_result = llm.generate_with_cot(
-                prompt=prompt,
-                max_new_tokens=512,
-                temperature=0.7,
-                step_token="Step",
-                num_samples=1,
-            )[0]
+            if use_http_client:
+                cot_result = llm.generate_with_cot(
+                    prompt=prompt,
+                    max_new_tokens=1024,
+                    temperature=0.7,
+                    step_token="Step",
+                    num_samples=1,
+                    with_latents=True,
+                )[0]
+            else:
+                cot_result = llm.generate_with_cot(
+                    prompt=prompt,
+                    max_new_tokens=1024,
+                    temperature=0.7,
+                    step_token="Step",
+                    num_samples=1,
+                )[0]
         else:
             # Refine previous reasoning
             refine_prompt = f"""{prompt}
@@ -311,20 +407,33 @@ Previous reasoning:
 
 Identify any weak or missing steps and provide an improved reasoning:"""
 
-            cot_result = llm.generate_with_cot(
-                prompt=refine_prompt,
-                max_new_tokens=512,
-                temperature=0.5,
-                step_token="Step",
-                num_samples=1,
-            )[0]
+            if use_http_client:
+                cot_result = llm.generate_with_cot(
+                    prompt=refine_prompt,
+                    max_new_tokens=1024,
+                    temperature=0.5,
+                    step_token="Step",
+                    num_samples=1,
+                    with_latents=True,
+                )[0]
+            else:
+                cot_result = llm.generate_with_cot(
+                    prompt=refine_prompt,
+                    max_new_tokens=1024,
+                    temperature=0.5,
+                    step_token="Step",
+                    num_samples=1,
+                )[0]
 
         # Extract latents and score
-        latents = llm.extract_latents(
-            tokens=cot_result["tokens"],
-            layer_idx=llm.layer_to_extract,
-            step_boundaries=cot_result["step_boundaries"],
-        )
+        if use_http_client:
+            latents = torch.tensor(cot_result["latents"], dtype=torch.float32)
+        else:
+            latents = llm.extract_latents(
+                tokens=cot_result["tokens"],
+                layer_idx=llm.layer_to_extract,
+                step_boundaries=cot_result["step_boundaries"],
+            )
 
         jepa_result = rjepa_client.score(
             latents=latents,

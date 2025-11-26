@@ -9,15 +9,20 @@ from typing import List, Dict, Any, Optional, Tuple
 import torch
 import numpy as np
 
-from rjepa.llm.adapter import LLMAdapter
 from rjepa.jepa.client import RJEPAClient
 
 logger = logging.getLogger(__name__)
 
 
+def _is_http_client(llm) -> bool:
+    """Check if llm is an HTTP client (has with_latents support)."""
+    # Check for StudentLLMClient by looking for HTTP-specific attributes
+    return hasattr(llm, '_client') and hasattr(llm, 'base_url')
+
+
 def nudge_reasoning_stepwise(
     prompt: str,
-    llm: LLMAdapter,
+    llm,  # LLMAdapter or StudentLLMClient
     rjepa_client: RJEPAClient,
     max_steps: int = 10,
     lambda_nudge: float = 0.2,
@@ -56,21 +61,39 @@ def nudge_reasoning_stepwise(
     """
     logger.info(f"Generating reasoning with nudge (lambda={lambda_nudge})...")
 
-    # Génère un CoT complet first
-    cot_result = llm.generate_with_cot(
-        prompt=prompt,
-        max_new_tokens=512,
-        temperature=temperature,
-        step_token="Step",
-        num_samples=1,
-    )[0]
+    # Check if we're using HTTP client or local adapter
+    use_http_client = _is_http_client(llm)
+    if use_http_client:
+        logger.info("Using HTTP client with integrated latent extraction")
 
-    # Extract latents
-    latents = llm.extract_latents(
-        tokens=cot_result["tokens"],
-        layer_idx=llm.layer_to_extract,
-        step_boundaries=cot_result["step_boundaries"],
-    )  # [num_steps, hidden_dim]
+    # Génère un CoT complet first
+    if use_http_client:
+        # HTTP client: use with_latents=True to get latents directly
+        cot_result = llm.generate_with_cot(
+            prompt=prompt,
+            max_new_tokens=1024,
+            temperature=temperature,
+            step_token="Step",
+            num_samples=1,
+            with_latents=True,
+        )[0]
+        # Convert latents from list to tensor
+        latents = torch.tensor(cot_result["latents"], dtype=torch.float32)
+    else:
+        # Local adapter: use traditional extraction
+        cot_result = llm.generate_with_cot(
+            prompt=prompt,
+            max_new_tokens=1024,
+            temperature=temperature,
+            step_token="Step",
+            num_samples=1,
+        )[0]
+        # Extract latents locally
+        latents = llm.extract_latents(
+            tokens=cot_result["tokens"],
+            layer_idx=llm.layer_to_extract,
+            step_boundaries=cot_result["step_boundaries"],
+        )  # [num_steps, hidden_dim]
 
     num_steps = latents.shape[0]
 
@@ -149,7 +172,7 @@ def nudge_reasoning_stepwise(
 
 def nudge_with_regeneration(
     prompt: str,
-    llm: LLMAdapter,
+    llm,  # LLMAdapter or StudentLLMClient
     rjepa_client: RJEPAClient,
     max_attempts: int = 3,
     jepa_threshold: float = 0.5,
@@ -188,27 +211,44 @@ def nudge_with_regeneration(
         f"max_attempts={max_attempts})..."
     )
 
+    # Check if we're using HTTP client or local adapter
+    use_http_client = _is_http_client(llm)
+    if use_http_client:
+        logger.info("Using HTTP client with integrated latent extraction")
+
     best_cot = None
     best_jepa_loss = float("inf")
 
     for attempt in range(max_attempts):
         logger.debug(f"Attempt {attempt + 1}/{max_attempts}...")
 
-        # Generate CoT
-        cot_result = llm.generate_with_cot(
-            prompt=prompt,
-            max_new_tokens=512,
-            temperature=temperature,
-            step_token="Step",
-            num_samples=1,
-        )[0]
-
-        # Extract latents
-        latents = llm.extract_latents(
-            tokens=cot_result["tokens"],
-            layer_idx=llm.layer_to_extract,
-            step_boundaries=cot_result["step_boundaries"],
-        )
+        if use_http_client:
+            # HTTP client: use with_latents=True to get latents directly
+            cot_result = llm.generate_with_cot(
+                prompt=prompt,
+                max_new_tokens=1024,
+                temperature=temperature,
+                step_token="Step",
+                num_samples=1,
+                with_latents=True,
+            )[0]
+            # Convert latents from list to tensor
+            latents = torch.tensor(cot_result["latents"], dtype=torch.float32)
+        else:
+            # Local adapter: use traditional extraction
+            cot_result = llm.generate_with_cot(
+                prompt=prompt,
+                max_new_tokens=1024,
+                temperature=temperature,
+                step_token="Step",
+                num_samples=1,
+            )[0]
+            # Extract latents locally
+            latents = llm.extract_latents(
+                tokens=cot_result["tokens"],
+                layer_idx=llm.layer_to_extract,
+                step_boundaries=cot_result["step_boundaries"],
+            )
 
         # Score with JEPA
         jepa_result = rjepa_client.score(
@@ -245,7 +285,7 @@ def nudge_with_regeneration(
 
 def nudge_with_beam_search(
     prompt: str,
-    llm: LLMAdapter,
+    llm,  # LLMAdapter or StudentLLMClient
     rjepa_client: RJEPAClient,
     beam_width: int = 3,
     max_steps: int = 10,
@@ -280,25 +320,44 @@ def nudge_with_beam_search(
     """
     logger.info(f"Beam search with JEPA guidance (width={beam_width})...")
 
+    # Check if we're using HTTP client or local adapter
+    use_http_client = _is_http_client(llm)
+    if use_http_client:
+        logger.info("Using HTTP client with integrated latent extraction")
+
     # Pour simplifier le MVP, on génère beam_width candidates complets
     # et on sélectionne le meilleur (pas de vrai beam search step-by-step)
 
     candidates = []
 
     for i in range(beam_width):
-        cot_result = llm.generate_with_cot(
-            prompt=prompt,
-            max_new_tokens=512,
-            temperature=temperature,
-            step_token="Step",
-            num_samples=1,
-        )[0]
-
-        latents = llm.extract_latents(
-            tokens=cot_result["tokens"],
-            layer_idx=llm.layer_to_extract,
-            step_boundaries=cot_result["step_boundaries"],
-        )
+        if use_http_client:
+            # HTTP client: use with_latents=True to get latents directly
+            cot_result = llm.generate_with_cot(
+                prompt=prompt,
+                max_new_tokens=1024,
+                temperature=temperature,
+                step_token="Step",
+                num_samples=1,
+                with_latents=True,
+            )[0]
+            # Convert latents from list to tensor
+            latents = torch.tensor(cot_result["latents"], dtype=torch.float32)
+        else:
+            # Local adapter: use traditional extraction
+            cot_result = llm.generate_with_cot(
+                prompt=prompt,
+                max_new_tokens=1024,
+                temperature=temperature,
+                step_token="Step",
+                num_samples=1,
+            )[0]
+            # Extract latents locally
+            latents = llm.extract_latents(
+                tokens=cot_result["tokens"],
+                layer_idx=llm.layer_to_extract,
+                step_boundaries=cot_result["step_boundaries"],
+            )
 
         jepa_result = rjepa_client.score(
             latents=latents,

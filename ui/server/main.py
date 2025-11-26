@@ -14,7 +14,7 @@ from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
-from rjepa.llm.adapter import LLMAdapter
+from rjepa.llm.client import StudentLLMClient
 from rjepa.jepa.client import RJEPAClient
 from rjepa.inference import (
     rerank_cots_with_jepa,
@@ -103,7 +103,6 @@ class JobStatus(BaseModel):
 def create_app(
     student_llm_url: str = "http://localhost:8000",
     rjepa_service_url: str = "http://localhost:8100",
-    llm_model_name: str = "Qwen/Qwen3-8B-Instruct",
 ) -> FastAPI:
     """
     Create FastAPI app for UI backend.
@@ -111,7 +110,6 @@ def create_app(
     Args:
         student_llm_url: URL of student LLM service
         rjepa_service_url: URL of R-JEPA service
-        llm_model_name: Model name for LLM adapter
 
     Returns:
         FastAPI app
@@ -131,19 +129,16 @@ def create_app(
         allow_headers=["*"],
     )
 
-    # Initialize clients
-    # Note: En production, on utiliserait des clients HTTP vers les services
-    # Pour le MVP, on instancie directement les adapters
+    # Initialize clients - use HTTP clients to call services
     try:
-        llm = LLMAdapter(
-            model_name=llm_model_name,
-            device="cuda",
-            quantization="awq-4bit",
-            layer_to_extract=-2,
-        )
-        logger.info(f"LLM adapter initialized: {llm_model_name}")
+        llm = StudentLLMClient(base_url=student_llm_url)
+        if llm.is_available():
+            logger.info(f"Student LLM client connected: {llm.model_name}")
+        else:
+            logger.warning("Student LLM service not available")
+            llm = None
     except Exception as e:
-        logger.warning(f"Failed to initialize LLM adapter: {e}")
+        logger.warning(f"Failed to connect to Student LLM service: {e}")
         llm = None
 
     rjepa_client = RJEPAClient(base_url=rjepa_service_url)
@@ -181,7 +176,7 @@ def create_app(
                 # Baseline: LLM seul
                 result = llm.generate_with_cot(
                     prompt=request.prompt,
-                    max_new_tokens=512,
+                    max_new_tokens=1024,
                     temperature=request.temperature,
                     num_samples=1,
                 )[0]
@@ -376,7 +371,7 @@ def create_app(
                 if llm is not None:
                     result = llm.generate_with_cot(
                         prompt=prompt,
-                        max_new_tokens=512,
+                        max_new_tokens=1024,
                         temperature=0.7,
                         num_samples=1,
                     )[0]
@@ -441,6 +436,9 @@ if __name__ == "__main__":
         student_llm_url=args.student_llm_url,
         rjepa_service_url=args.rjepa_url,
     )
+
+    logger.info(f"Student LLM URL: {args.student_llm_url}")
+    logger.info(f"R-JEPA Service URL: {args.rjepa_url}")
 
     logger.info(f"Starting UI backend on {args.host}:{args.port}")
     uvicorn.run(app, host=args.host, port=args.port)
