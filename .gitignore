@@ -41,8 +41,10 @@ venv/
 .mypy_cache/
 
 # Data & Models (LARGE FILES)
-data/
-!data/.gitkeep
+/data/
+!/data/.gitkeep
+# Exception: rjepa/data/ contains Python code, not data files
+!rjepa/data/
 logs/
 *.pth
 *.pt
